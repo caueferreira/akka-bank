@@ -2,10 +2,12 @@ package actors
 
 import responses.CreditResponse
 import responses.DebitResponse
-import EventStore
+import source.EventStore
 import akka.actor.AbstractActor
 import akka.actor.Props
 import commands.AccountCommand
+import errors.AccountWithoutBalanceForDebit
+import responses.BalanceResponse
 
 class Account(private val id: String, private val eventStore: EventStore, var balance: Long = 0) : AbstractActor() {
 
@@ -16,26 +18,39 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
     }
 
     override fun createReceive(): Receive = receiveBuilder()
-            .match(AccountCommand.Debit::class.java) { debit ->
-                println("${debit.requestId} ~ debit of ${debit.amount} to ${debit.accountId}")
-                eventStore.add(debit)
-                balance -= debit.amount
-                sender.tell(DebitResponse(
-                        debit.requestId,
+            .match(AccountCommand.Read::class.java) { read ->
+                eventStore.add(read)
+                sender.tell(BalanceResponse(
+                        read.requestId,
                         balance,
-                        debit.accountId
-                ), self())
+                        id
+                ), self)
+            }
+            .match(AccountCommand.Debit::class.java) { debit ->
+                if (hasBalanceForDebit(debit.amount)) {
+                    eventStore.add(debit)
+                    balance -= debit.amount
+                    sender.tell(DebitResponse(
+                            debit.requestId,
+                            debit.amount,
+                            debit.accountId
+                    ), self)
+                } else {
+                    println("${debit.requestId} ~ ${debit.accountId} has insufficient balance to debit ${debit.amount}")
+                    sender.forward(AccountWithoutBalanceForDebit(), context)
+                }
             }
             .match(AccountCommand.Credit::class.java) { credit ->
-                println("${credit.requestId} ~ credit of ${credit.amount} to ${credit.accountId}")
                 eventStore.add(credit)
                 balance += credit.amount
                 sender.tell(CreditResponse(
                         credit.requestId,
-                        balance,
+                        credit.amount,
                         credit.accountId
-                ), self())
+                ), self)
             }.build()
+
+    private fun hasBalanceForDebit(amount: Long) = balance - amount > -1000
 
     override fun preStart() {
         eventStore.commands(id).forEach {
@@ -45,6 +60,6 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
             }
         }
 
-        println("$id has a balance of $balance")
+        println("$id recovered balance of $balance from event store")
     }
 }

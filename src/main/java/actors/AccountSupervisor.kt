@@ -1,12 +1,18 @@
 package actors
 
-import EventStore
+import source.EventStore
 import akka.actor.AbstractActor
 import akka.actor.ActorRef
 import akka.actor.Props
 import commands.AccountCommand
 import commands.Command
-import java.util.HashMap
+import akka.actor.SupervisorStrategy
+import akka.japi.pf.DeciderBuilder
+import akka.actor.OneForOneStrategy
+import errors.AccountWithoutBalanceForDebit
+import java.lang.Exception
+import java.time.Duration
+import java.util.*
 
 class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
 
@@ -21,6 +27,7 @@ class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
     override fun createReceive(): Receive {
         return receiveBuilder()
                 .match(Command::class.java, ::handleCommand)
+                .match(AccountWithoutBalanceForDebit::class.java, ::handleError)
                 .build()
     }
 
@@ -28,12 +35,9 @@ class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
         when (command) {
             is AccountCommand.Transfer -> {
                 println("${command.requestId} ~ ${command.accountId} requested a transfer of ${command.amount} to ${command.receiverId}")
-                accountIdToActor[command.accountId]?.forward(AccountCommand.Debit(
-                        command.amount, command.requestId, command.accountId
-                ), context)
-                accountIdToActor[command.receiverId]?.forward(AccountCommand.Credit(
-                        command.amount, command.requestId, command.receiverId
-                ), context)
+                context.actorOf(TransferSaga.props(accountIdToActor[command.accountId]!!,
+                        accountIdToActor[command.receiverId]!!,
+                        command), "transfer-saga:"+ UUID.randomUUID()).forward(command, context)
             }
             else -> accountIdToActor[command.accountId]?.forward(command, context)
         }
@@ -43,5 +47,10 @@ class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
         eventStore.commands.keys.forEach {
             accountIdToActor[it] = context.actorOf(Account.props(it, eventStore), it)
         }
+    }
+
+
+    private fun handleError(exception: Exception) {
+        println("handleError $exception")
     }
 }
