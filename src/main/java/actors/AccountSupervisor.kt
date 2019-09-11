@@ -27,7 +27,6 @@ class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
     override fun createReceive(): Receive {
         return receiveBuilder()
                 .match(Command::class.java, ::handleCommand)
-                .match(AccountWithoutBalanceForDebit::class.java, ::handleError)
                 .build()
     }
 
@@ -35,9 +34,12 @@ class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
         when (command) {
             is AccountCommand.Transfer -> {
                 println("${command.requestId} ~ ${command.accountId} requested a transfer of ${command.amount} to ${command.receiverId}")
-                context.actorOf(TransferSaga.props(accountIdToActor[command.accountId]!!,
+                val transferSaga = TransferSaga.props(accountIdToActor[command.accountId]!!,
                         accountIdToActor[command.receiverId]!!,
-                        command), "transfer-saga:"+ UUID.randomUUID()).forward(command, context)
+                        command)
+
+                context.actorOf(transferSaga, "transfer-saga:" + UUID.randomUUID())
+                        .forward(command, context)
             }
             else -> accountIdToActor[command.accountId]?.forward(command, context)
         }
@@ -49,8 +51,4 @@ class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
         }
     }
 
-
-    private fun handleError(exception: Exception) {
-        println("handleError $exception")
-    }
 }

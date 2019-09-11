@@ -37,7 +37,8 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
                     ), self)
                 } else {
                     println("${debit.requestId} ~ ${debit.accountId} has insufficient balance to debit ${debit.amount}")
-                    sender.forward(AccountWithoutBalanceForDebit(), context)
+                    sender.tell(AccountWithoutBalanceForDebit(), self)
+                    AccountWithoutBalanceForDebit()
                 }
             }
             .match(AccountCommand.Credit::class.java) { credit ->

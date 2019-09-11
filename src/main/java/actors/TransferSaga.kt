@@ -3,7 +3,6 @@ package actors
 import akka.actor.*
 import akka.japi.pf.DeciderBuilder
 import commands.AccountCommand
-import commands.Command
 import errors.AccountWithoutBalanceForDebit
 import java.lang.Exception
 import java.time.Duration
@@ -24,32 +23,18 @@ class TransferSaga(private val from: ActorRef, private val to: ActorRef, private
     }
 
     private fun transfer(command: AccountCommand.Transfer) {
-        from.forward(AccountCommand.Debit(
+        from.tell(AccountCommand.Debit(
                 command.amount, command.requestId, command.accountId
-        ), context)
-        to.forward(AccountCommand.Credit(
+        ), self)
+        to.tell(AccountCommand.Credit(
                 command.amount, command.requestId, command.receiverId
-        ), context)
+        ), self)
     }
 
     private fun handleError(exception: Exception) {
-        println("handleError $exception")
-    }
-
-    private val strategy = OneForOneStrategy(
-            10,
-            Duration.ofMinutes(1),
-            DeciderBuilder
-                    .match(AccountWithoutBalanceForDebit::class.java) {
-                        println("${transfer.requestId} ~ triggered compensation for ${transfer.accountId} with amount ${transfer.amount}")
-                        to.forward(AccountCommand.Debit(
-                                transfer.amount, transfer.requestId, transfer.accountId
-                        ), context)
-                        SupervisorStrategy.resume()
-                    }
-                    .build())
-
-    override fun supervisorStrategy(): SupervisorStrategy {
-        return strategy
+        println("${transfer.requestId} ~ triggered compensation for ${transfer.accountId} with amount ${transfer.amount}")
+        to.forward(AccountCommand.Debit(
+                transfer.amount, transfer.requestId, transfer.receiverId
+        ), context)
     }
 }
