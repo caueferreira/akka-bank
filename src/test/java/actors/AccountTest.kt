@@ -4,6 +4,7 @@ import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.testkit.javadsl.TestKit
 import commands.AccountCommand
+import errors.AccountWithoutBalanceForDebit
 import junit.framework.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -97,7 +98,7 @@ class AccountTest {
     }
 
     @Test
-    fun `should compose balance of credits and debits`(){
+    fun `should compose balance of credits and debits`() {
         val accountId = "accountTest"
         val commands = arrayListOf<AccountCommand>(
                 AccountCommand.Credit(1000, randomUUID().toString(), accountId),
@@ -126,7 +127,7 @@ class AccountTest {
     }
 
     @Test
-    fun `should raise exception`(){
+    fun `should raise exception`() {
         val accountId = "accountTest"
         val account = AccountTestBuilder()
                 .build(accountId)
@@ -137,10 +138,7 @@ class AccountTest {
 
         account.tell(debit, probe.ref)
 
-        val response = probe.expectMsgClass(DebitResponse::class.java)
-
-        assertEquals(requestId, response.requestId)
-        assertEquals(accountId, response.accountId)
+        probe.expectMsgClass(AccountWithoutBalanceForDebit::class.java)
     }
 
     private inner class AccountTestBuilder {
@@ -149,6 +147,7 @@ class AccountTest {
             given(eventStore.commands(accountId)).willReturn(commands)
             return this
         }
+
         fun build(accountId: String): ActorRef = system.actorOf(Account.props(accountId, eventStore), accountId)
     }
 }
