@@ -1,11 +1,10 @@
 package actors
 
 import akka.actor.*
-import akka.japi.pf.DeciderBuilder
 import commands.AccountCommand
 import errors.AccountWithoutBalanceForDebit
 import java.lang.Exception
-import java.time.Duration
+import akka.pattern.Patterns.ask
 
 class TransferSaga(private val from: ActorRef, private val to: ActorRef, private val transfer: AccountCommand.Transfer) : AbstractActor() {
 
@@ -23,12 +22,19 @@ class TransferSaga(private val from: ActorRef, private val to: ActorRef, private
     }
 
     private fun transfer(command: AccountCommand.Transfer) {
-        from.tell(AccountCommand.Debit(
-                command.amount, command.requestId, command.accountId
-        ), self)
-        to.tell(AccountCommand.Credit(
-                command.amount, command.requestId, command.receiverId
-        ), self)
+        ask(from,
+                AccountCommand.Debit(
+                        command.amount,
+                        command.requestId,
+                        command.accountId
+                ), 200)
+
+        ask(to,
+                AccountCommand.Credit(
+                        command.amount,
+                        command.requestId,
+                        command.receiverId
+                ), 200)
     }
 
     private fun handleError(exception: Exception) {

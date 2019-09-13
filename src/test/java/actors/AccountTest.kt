@@ -12,6 +12,7 @@ import org.mockito.BDDMockito.given
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import responses.BalanceResponse
+import responses.CreditResponse
 import responses.DebitResponse
 import source.EventStore
 import java.util.UUID.randomUUID
@@ -139,6 +140,74 @@ class AccountTest {
         account.tell(debit, probe.ref)
 
         probe.expectMsgClass(AccountWithoutBalanceForDebit::class.java)
+    }
+
+    @Test
+    fun `should increase balance when credit event is created`() {
+        val accountId = "accountTest"
+
+        val commands = arrayListOf<AccountCommand>(
+                AccountCommand.Credit(500, randomUUID().toString(), accountId))
+
+        val account = AccountTestBuilder()
+                .withEvents(accountId, commands)
+                .build(accountId)
+
+        val requestId = randomUUID().toString()
+        val debit = AccountCommand.Credit(1000, requestId, accountId)
+        val probe = TestKit(system)
+
+        account.tell(debit, probe.ref)
+
+        val creditResponse = probe.expectMsgClass(CreditResponse::class.java)
+
+        assertEquals(requestId, creditResponse.requestId)
+        assertEquals(accountId, creditResponse.accountId)
+        assertEquals(1000, creditResponse.amount)
+
+        val read = AccountCommand.Read(requestId, accountId)
+
+        account.tell(read, probe.ref)
+
+        val readResponse = probe.expectMsgClass(BalanceResponse::class.java)
+
+        assertEquals(requestId, readResponse.requestId)
+        assertEquals(accountId, readResponse.accountId)
+        assertEquals(1500, readResponse.balance)
+    }
+
+    @Test
+    fun `should reduce balance when credit event is created`() {
+        val accountId = "accountTest"
+
+        val commands = arrayListOf<AccountCommand>(
+                AccountCommand.Credit(500, randomUUID().toString(), accountId))
+
+        val account = AccountTestBuilder()
+                .withEvents(accountId, commands)
+                .build(accountId)
+
+        val requestId = randomUUID().toString()
+        val debit = AccountCommand.Debit(1000, requestId, accountId)
+        val probe = TestKit(system)
+
+        account.tell(debit, probe.ref)
+
+        val debitResponse = probe.expectMsgClass(DebitResponse::class.java)
+
+        assertEquals(requestId, debitResponse.requestId)
+        assertEquals(accountId, debitResponse.accountId)
+        assertEquals(1000, debitResponse.amount)
+
+        val read = AccountCommand.Read(requestId, accountId)
+
+        account.tell(read, probe.ref)
+
+        val readResponse = probe.expectMsgClass(BalanceResponse::class.java)
+
+        assertEquals(requestId, readResponse.requestId)
+        assertEquals(accountId, readResponse.accountId)
+        assertEquals(-500, readResponse.balance)
     }
 
     private inner class AccountTestBuilder {

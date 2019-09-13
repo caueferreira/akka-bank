@@ -26,23 +26,25 @@ class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
 
     override fun createReceive(): Receive {
         return receiveBuilder()
+                .match(AccountCommand.Transfer::class.java, ::handleTransfer)
                 .match(Command::class.java, ::handleCommand)
                 .build()
     }
 
-    private fun handleCommand(command: Command) {
-        when (command) {
-            is AccountCommand.Transfer -> {
-                println("${command.requestId} ~ ${command.accountId} requested a transfer of ${command.amount} to ${command.receiverId}")
-                val transferSaga = TransferSaga.props(accountIdToActor[command.accountId]!!,
-                        accountIdToActor[command.receiverId]!!,
-                        command)
+    private fun handleTransfer(transfer: AccountCommand.Transfer) {
+        println("${transfer.requestId} ~ ${transfer.accountId} requested a transfer of ${transfer.amount} to ${transfer.receiverId}")
 
-                context.actorOf(transferSaga, "transfer-saga:" + UUID.randomUUID())
-                        .forward(command, context)
-            }
-            else -> accountIdToActor[command.accountId]?.forward(command, context)
-        }
+        val transferSaga = TransferSaga.props(accountIdToActor[transfer.accountId]!!,
+                accountIdToActor[transfer.receiverId]!!,
+                transfer)
+
+        context.actorOf(transferSaga, "transfer-saga:${transfer.accountId}:${UUID.randomUUID()}")
+                .forward(transfer, context)
+    }
+
+    private fun handleCommand(command: Command) {
+        accountIdToActor[command.accountId]?.forward(command, context)
+
     }
 
     override fun preStart() {
