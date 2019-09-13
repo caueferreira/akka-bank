@@ -35,5 +35,9 @@ fun main(args: Array<String>) {
 //    ask(supervisor, AccountCommand.Credit(1122, randomUUID().toString(), "etreardu"), 1000)
 //    ask(supervisor, AccountCommand.Credit(233, randomUUID().toString(), "alotow"), 1000)
 //    ask(supervisor, AccountCommand.Credit(988, randomUUID().toString(), "sonore"), 1000)
-    ask(supervisor, AccountCommand.Transfer(2203, "alotow", randomUUID().toString(), "sonore"), 1000)
+    ask(supervisor, AccountCommand.Transfer(2203,
+            "alotow",
+            randomUUID().toString(),
+            "sonore"), 1000)
+
 }

@@ -1,10 +1,10 @@
 package actors
 
 import akka.actor.*
+import akka.pattern.Patterns.ask
 import commands.AccountCommand
 import errors.AccountWithoutBalanceForDebit
-import java.lang.Exception
-import akka.pattern.Patterns.ask
+import responses.TransferResponse
 
 class TransferSaga(private val from: ActorRef, private val to: ActorRef, private val transfer: AccountCommand.Transfer) : AbstractActor() {
 
@@ -17,27 +17,39 @@ class TransferSaga(private val from: ActorRef, private val to: ActorRef, private
     override fun createReceive(): Receive {
         return receiveBuilder()
                 .match(AccountCommand.Transfer::class.java, ::transfer)
-                .match(AccountWithoutBalanceForDebit::class.java, ::handleError)
                 .build()
     }
 
     private fun transfer(command: AccountCommand.Transfer) {
-        ask(from,
+        val debit = ask(from,
                 AccountCommand.Debit(
                         command.amount,
                         command.requestId,
                         command.accountId
                 ), 200)
 
-        ask(to,
+        val credit = ask(to,
                 AccountCommand.Credit(
                         command.amount,
                         command.requestId,
                         command.receiverId
                 ), 200)
+
+        debit.zip(credit).onComplete({
+            if (it.get()._1 is AccountWithoutBalanceForDebit) {
+                compensation()
+            } else {
+                sender.tell(TransferResponse(
+                        transfer.requestId,
+                        transfer.amount,
+                        transfer.accountId,
+                        transfer.receiverId),
+                        self)
+            }
+        }, context.dispatcher)
     }
 
-    private fun handleError(exception: Exception) {
+    private fun compensation() {
         println("${transfer.requestId} ~ triggered compensation for ${transfer.accountId} with amount ${transfer.amount}")
         to.forward(AccountCommand.Debit(
                 transfer.amount, transfer.requestId, transfer.receiverId
