@@ -1,7 +1,3 @@
 package responses
 
-data class DebitResponse(val requestId: String, val amount: Long, val accountId: String, val status: StatusResponse) {
-    init {
-        println("$requestId ~ $accountId was debited $amount")
-    }
-}
+data class DebitResponse(val requestId: String, val amount: Long, val accountId: String, val status: StatusResponse)

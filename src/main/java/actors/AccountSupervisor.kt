@@ -27,11 +27,9 @@ class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
     }
 
     private fun handleTransfer(transfer: AccountCommand.Transfer) {
-        println("${transfer.requestId} ~ ${transfer.accountId} requested a transfer of ${transfer.amount} to ${transfer.receiverId}")
-
-        val transferSaga = TransferSaga.props(accountIdToActor[transfer.accountId]!!,
-                accountIdToActor[transfer.receiverId]!!,
-                transfer)
+        val transferSaga = TransferSaga.props(
+                accountIdToActor[transfer.accountId]!!,
+                accountIdToActor[transfer.receiverId]!!)
 
         context.actorOf(transferSaga, "transfer-saga:${transfer.accountId}:${randomUUID()}")
                 .forward(transfer, context)

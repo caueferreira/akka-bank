@@ -39,7 +39,6 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
                             StatusResponse.SUCCESS
                     ), self)
                 } else {
-                    println("${debit.requestId} ~ ${debit.accountId} has insufficient balance to debit ${debit.amount}")
                     sender.tell(AccountWithoutBalanceForDebit(), self)
                     AccountWithoutBalanceForDebit()
                 }
@@ -64,7 +63,5 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
                 is AccountCommand.Credit -> balance += it.amount
             }
         }
-
-        println("$id recovered balance of $balance from event store")
     }
 }

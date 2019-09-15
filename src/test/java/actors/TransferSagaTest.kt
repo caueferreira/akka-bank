@@ -35,7 +35,7 @@ class TransferSagaTest {
         val account2 = system.actorOf(Account.props("account2", eventStore), "account2")
 
         val transfer = AccountCommand.Transfer(100, "account2", "REQ", "account1")
-        val transferSaga = system.actorOf(TransferSaga.props(account1, account2, transfer), "transfer")
+        val transferSaga = system.actorOf(TransferSaga.props(account1, account2), "transfer")
 
         val probe = TestKit(system)
 
@@ -59,7 +59,7 @@ class TransferSagaTest {
         val account2 = system.actorOf(Account.props("account2", eventStore), "account2")
 
         val transfer = AccountCommand.Transfer(10000, "account2", "REQ", "account1")
-        val transferSaga = system.actorOf(TransferSaga.props(account1, account2, transfer), "transfer")
+        val transferSaga = system.actorOf(TransferSaga.props(account1, account2), "transfer")
 
         val probe = TestKit(system)
 

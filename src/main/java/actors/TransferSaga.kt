@@ -9,11 +9,11 @@ import errors.AccountWithoutBalanceForDebit
 import responses.StatusResponse
 import responses.TransferResponse
 
-class TransferSaga(private val from: ActorRef, private val to: ActorRef, private val transfer: AccountCommand.Transfer) : AbstractActor() {
+class TransferSaga(private val from: ActorRef, private val to: ActorRef) : AbstractActor() {
 
     companion object {
-        fun props(from: ActorRef, to: ActorRef, transfer: AccountCommand.Transfer): Props {
-            return Props.create(TransferSaga::class.java) { TransferSaga(from, to, transfer) }
+        fun props(from: ActorRef, to: ActorRef): Props {
+            return Props.create(TransferSaga::class.java) { TransferSaga(from, to) }
         }
     }
 
@@ -23,46 +23,44 @@ class TransferSaga(private val from: ActorRef, private val to: ActorRef, private
                 .build()
     }
 
-    private fun transfer(command: AccountCommand.Transfer) {
+    private fun transfer(transfer: AccountCommand.Transfer) {
         val debit = ask(from,
                 AccountCommand.Debit(
-                        command.amount,
-                        command.requestId,
-                        command.accountId
+                        transfer.amount,
+                        transfer.requestId,
+                        transfer.accountId
                 ), 200)
 
         val credit = ask(to,
                 AccountCommand.Credit(
-                        command.amount,
-                        command.requestId,
-                        command.receiverId
+                        transfer.amount,
+                        transfer.requestId,
+                        transfer.receiverId
                 ), 200)
 
         val currentSender = sender
         credit.zip(debit).onComplete({
             if (it.get()._2 is AccountWithoutBalanceForDebit) {
-                compensation()
-                currentSender.tell(TransferResponse(
-                        transfer.requestId,
-                        transfer.amount,
-                        transfer.accountId,
-                        transfer.receiverId,
-                        StatusResponse.ERROR),
+                compensation(transfer)
+                currentSender.tell(
+                        buildTransfer(transfer, StatusResponse.ERROR),
                         self)
             } else {
-                currentSender.tell(TransferResponse(
-                        transfer.requestId,
-                        transfer.amount,
-                        transfer.accountId,
-                        transfer.receiverId,
-                        StatusResponse.SUCCESS),
+                currentSender.tell(
+                        buildTransfer(transfer, StatusResponse.SUCCESS),
                         self)
             }
         }, context.system.dispatcher)
     }
 
-    private fun compensation() {
-        println("${transfer.requestId} ~ triggered compensation for ${transfer.accountId} with amount ${transfer.amount}")
+    private fun buildTransfer(transfer: AccountCommand.Transfer, status: StatusResponse) = TransferResponse(
+            transfer.requestId,
+            transfer.amount,
+            transfer.accountId,
+            transfer.receiverId,
+            status)
+
+    private fun compensation(transfer: AccountCommand.Transfer) {
         to.forward(AccountCommand.Debit(
                 transfer.amount, transfer.requestId, transfer.receiverId
         ), context)
