@@ -38,7 +38,7 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
                 sender.tell(buildCreditResponse(credit), self)
             }.build()
 
-    private fun save(read: Operation) = eventStore.add(read)
+    private fun save(operation: Operation) = eventStore.add(operation)
 
     private fun buildCreditResponse(credit: Operation.Credit) = CreditResponse(credit.amount, StatusResponse.SUCCESS, credit.requestId, credit.accountId)
     private fun buildDebitResponse(debit: Operation.Debit) = DebitResponse(debit.amount, StatusResponse.SUCCESS, debit.requestId, debit.accountId)
