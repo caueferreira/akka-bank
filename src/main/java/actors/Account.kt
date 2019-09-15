@@ -20,23 +20,23 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
 
     override fun createReceive(): Receive = receiveBuilder()
             .match(AccountCommand.Read::class.java) { read ->
-                eventStore.add(read)
+                save(read)
                 sender.tell(BalanceResponse(
-                        read.requestId,
                         balance,
-                        id,
-                        StatusResponse.SUCCESS
+                        StatusResponse.SUCCESS,
+                        read.requestId,
+                        id
                 ), self)
             }
             .match(AccountCommand.Debit::class.java) { debit ->
                 if (hasBalanceForDebit(debit.amount)) {
-                    eventStore.add(debit)
+                    save(debit)
                     balance -= debit.amount
                     sender.tell(DebitResponse(
-                            debit.requestId,
                             debit.amount,
-                            debit.accountId,
-                            StatusResponse.SUCCESS
+                            StatusResponse.SUCCESS,
+                            debit.requestId,
+                            debit.accountId
                     ), self)
                 } else {
                     sender.tell(AccountWithoutBalanceForDebit(), self)
@@ -44,15 +44,19 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
                 }
             }
             .match(AccountCommand.Credit::class.java) { credit ->
-                eventStore.add(credit)
+                save(credit)
                 balance += credit.amount
                 sender.tell(CreditResponse(
-                        credit.requestId,
                         credit.amount,
-                        credit.accountId,
-                        StatusResponse.SUCCESS
+                        StatusResponse.SUCCESS,
+                        credit.requestId,
+                        credit.accountId
                 ), self)
             }.build()
+
+    private fun save(read: AccountCommand) {
+        eventStore.add(read)
+    }
 
     private fun hasBalanceForDebit(amount: Long) = balance - amount > -1000
 

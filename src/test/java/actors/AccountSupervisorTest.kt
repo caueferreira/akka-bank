@@ -41,7 +41,7 @@ class AccountSupervisorTest {
         supervisor.tell(debit, probe.ref)
 
         val response = probe.expectMsgClass(DebitResponse::class.java)
-        val expected = DebitResponse("REQ", 100, "account1", StatusResponse.SUCCESS)
+        val expected = DebitResponse(100, StatusResponse.SUCCESS, "REQ", "account1")
         assertEquals(expected, response)
     }
 
@@ -59,7 +59,7 @@ class AccountSupervisorTest {
         supervisor.tell(credit, probe.ref)
 
         val response = probe.expectMsgClass(CreditResponse::class.java)
-        val expected = CreditResponse("REQ", 100, "account1", StatusResponse.SUCCESS)
+        val expected = CreditResponse(100, StatusResponse.SUCCESS, "REQ", "account1")
         assertEquals(expected, response)
     }
 
@@ -78,7 +78,7 @@ class AccountSupervisorTest {
         supervisor.tell(transfer, probe.ref)
 
         val response = probe.expectMsgClass(TransferResponse::class.java)
-        val expected = TransferResponse("REQ", 100, "account1", "account2", StatusResponse.SUCCESS)
+        val expected = TransferResponse(100, "account2", StatusResponse.SUCCESS, "REQ", "account1")
         assertEquals(expected, response)
     }
 }

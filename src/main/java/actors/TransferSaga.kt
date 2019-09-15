@@ -54,11 +54,11 @@ class TransferSaga(private val from: ActorRef, private val to: ActorRef) : Abstr
     }
 
     private fun buildTransfer(transfer: AccountCommand.Transfer, status: StatusResponse) = TransferResponse(
-            transfer.requestId,
             transfer.amount,
-            transfer.accountId,
             transfer.receiverId,
-            status)
+            status,
+            transfer.requestId,
+            transfer.accountId)
 
     private fun compensation(transfer: AccountCommand.Transfer) {
         to.forward(AccountCommand.Debit(
