@@ -8,6 +8,8 @@ import commands.*
 import errors.AccountWithoutBalanceForDebit
 import responses.StatusResponse
 import responses.TransferResponse
+import scala.Tuple2
+import scala.concurrent.Future
 
 class TransferSaga(private val from: ActorRef, private val to: ActorRef) : AbstractActor() {
 
@@ -27,16 +29,18 @@ class TransferSaga(private val from: ActorRef, private val to: ActorRef) : Abstr
         val debit = ask(from, transfer.debit(), 200)
         val credit = ask(to, transfer.credit(), 200)
 
-        val currentSender = sender
-        credit.zip(debit).onComplete({
-            if (it.get()._2 is AccountWithoutBalanceForDebit) {
-                compensation(transfer)
-                currentSender.tell(buildTransfer(transfer, StatusResponse.ERROR), self)
-            } else {
-                currentSender.tell(buildTransfer(transfer, StatusResponse.SUCCESS), self)
-            }
-        }, context.system.dispatcher)
+        handleFuture(sender, transfer, credit.zip(debit))
     }
+
+    private fun handleFuture(sender: ActorRef, transfer: Operation.Transfer, zip: Future<Tuple2<Any, Any>>) = zip.onComplete({
+        var status = StatusResponse.SUCCESS
+        if (it.get()._2 is AccountWithoutBalanceForDebit) {
+            compensation(transfer)
+            status = StatusResponse.ERROR
+        }
+
+        sender.tell(buildTransfer(transfer, status), self)
+    }, context.system.dispatcher)
 
     private fun buildTransfer(transfer: Operation.Transfer, status: StatusResponse) = TransferResponse(
             transfer.amount,
