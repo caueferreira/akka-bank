@@ -4,7 +4,6 @@ import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.testkit.javadsl.TestKit
 import commands.Operation
-import errors.AccountWithoutBalanceForDebit
 import java.util.UUID.randomUUID
 import junit.framework.Assert.assertEquals
 import org.junit.Before
@@ -144,7 +143,12 @@ class AccountTest {
 
         account.tell(debit, probe.ref)
 
-        probe.expectMsgClass(AccountWithoutBalanceForDebit::class.java)
+        val response = probe.expectMsgClass(DebitResponse::class.java)
+
+        assertEquals(requestId, response.requestId)
+        assertEquals(accountId, response.accountId)
+        assertEquals(100000, response.amount)
+        assertEquals(StatusResponse.ERROR, response.status)
     }
 
     @Test

@@ -3,7 +3,6 @@ package actors
 import akka.actor.AbstractActor
 import akka.actor.Props
 import commands.Operation
-import errors.AccountWithoutBalanceForDebit
 import responses.BalanceResponse
 import responses.CreditResponse
 import responses.DebitResponse
@@ -29,7 +28,7 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
                     balance -= debit.amount
                     sender.tell(buildDebitResponse(debit), self)
                 } else {
-                    sender.tell(AccountWithoutBalanceForDebit(), self)
+                    sender.tell(buildDebitResponse(debit, StatusResponse.ERROR), self)
                 }
             }
             .match(Operation.Credit::class.java) { credit ->
@@ -41,7 +40,7 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
     private fun save(operation: Operation) = eventStore.add(operation)
 
     private fun buildCreditResponse(credit: Operation.Credit) = CreditResponse(credit.amount, StatusResponse.SUCCESS, credit.requestId, credit.accountId)
-    private fun buildDebitResponse(debit: Operation.Debit) = DebitResponse(debit.amount, StatusResponse.SUCCESS, debit.requestId, debit.accountId)
+    private fun buildDebitResponse(debit: Operation.Debit, status: StatusResponse = StatusResponse.SUCCESS) = DebitResponse(debit.amount, status, debit.requestId, debit.accountId)
 
     private fun hasBalanceForDebit(amount: Long) = balance - amount > -1000
 
