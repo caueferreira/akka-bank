@@ -27,12 +27,17 @@ class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
     }
 
     private fun handleTransfer(transfer: Operation.Transfer) {
-        val transferSaga = TransferSaga.props(
-                accountIdToActor[transfer.accountId]!!,
-                accountIdToActor[transfer.receiverId]!!)
+        val from = accountIdToActor[transfer.accountId]
+        val to = accountIdToActor[transfer.receiverId]
 
-        context.actorOf(transferSaga, "transfer-saga:${transfer.accountId}:${randomUUID()}")
-                .forward(transfer, context)
+        if (from != null && to != null) {
+            val transferSaga = TransferSaga.props(
+                    from,
+                    to)
+
+            context.actorOf(transferSaga, "transfer-saga:${transfer.accountId}:${randomUUID()}")
+                    .forward(transfer, context)
+        }
     }
 
     private fun handleCommand(command: Command) {
