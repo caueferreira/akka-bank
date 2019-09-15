@@ -4,6 +4,7 @@ import akka.actor.*
 import akka.pattern.Patterns.ask
 import commands.AccountCommand
 import errors.AccountWithoutBalanceForDebit
+import responses.StatusResponse
 import responses.TransferResponse
 
 class TransferSaga(private val from: ActorRef, private val to: ActorRef, private val transfer: AccountCommand.Transfer) : AbstractActor() {
@@ -35,18 +36,28 @@ class TransferSaga(private val from: ActorRef, private val to: ActorRef, private
                         command.receiverId
                 ), 200)
 
-        debit.zip(credit).onComplete({
-            if (it.get()._1 is AccountWithoutBalanceForDebit) {
+
+        val currentSender = sender
+        credit.zip(debit).onComplete({
+            if (it.get()._2 is AccountWithoutBalanceForDebit) {
                 compensation()
-            } else {
-                sender.tell(TransferResponse(
+                currentSender.tell(TransferResponse(
                         transfer.requestId,
                         transfer.amount,
                         transfer.accountId,
-                        transfer.receiverId),
+                        transfer.receiverId,
+                        StatusResponse.ERROR),
+                        self)
+            } else {
+                currentSender.tell(TransferResponse(
+                        transfer.requestId,
+                        transfer.amount,
+                        transfer.accountId,
+                        transfer.receiverId,
+                        StatusResponse.SUCCESS),
                         self)
             }
-        }, context.dispatcher)
+        }, context.system.dispatcher)
     }
 
     private fun compensation() {

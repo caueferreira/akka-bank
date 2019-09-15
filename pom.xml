@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>akka-project</groupId>
-    <artifactId>akka-project</artifactId>
+    <groupId>akka-bank</groupId>
+    <artifactId>akka-bank</artifactId>
     <version>1.0-SNAPSHOT</version>
     <properties>
         <akka>2.5.23</akka>
@@ -63,14 +63,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-stream_2.11</artifactId>
-            <version>2.5.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-stream-testkit_2.11</artifactId>
-            <version>2.5.2</version>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>0.8.4</version>
         </dependency>
 
     </dependencies>
@@ -101,6 +96,7 @@
                     <jvmTarget>1.8</jvmTarget>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
 

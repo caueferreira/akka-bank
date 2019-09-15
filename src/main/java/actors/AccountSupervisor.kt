@@ -52,5 +52,4 @@ class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
             accountIdToActor[it] = context.actorOf(Account.props(it, eventStore), it)
         }
     }
-
 }

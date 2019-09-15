@@ -8,6 +8,7 @@ import akka.actor.Props
 import commands.AccountCommand
 import errors.AccountWithoutBalanceForDebit
 import responses.BalanceResponse
+import responses.StatusResponse
 
 class Account(private val id: String, private val eventStore: EventStore, var balance: Long = 0) : AbstractActor() {
 
@@ -23,7 +24,8 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
                 sender.tell(BalanceResponse(
                         read.requestId,
                         balance,
-                        id
+                        id,
+                        StatusResponse.SUCCESS
                 ), self)
             }
             .match(AccountCommand.Debit::class.java) { debit ->
@@ -33,7 +35,8 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
                     sender.tell(DebitResponse(
                             debit.requestId,
                             debit.amount,
-                            debit.accountId
+                            debit.accountId,
+                            StatusResponse.SUCCESS
                     ), self)
                 } else {
                     println("${debit.requestId} ~ ${debit.accountId} has insufficient balance to debit ${debit.amount}")
@@ -47,7 +50,8 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
                 sender.tell(CreditResponse(
                         credit.requestId,
                         credit.amount,
-                        credit.accountId
+                        credit.accountId,
+                        StatusResponse.SUCCESS
                 ), self)
             }.build()
 
