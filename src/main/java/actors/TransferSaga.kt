@@ -5,6 +5,7 @@ import akka.actor.ActorRef
 import akka.actor.Props
 import akka.pattern.Patterns.ask
 import commands.*
+import responses.CreditResponse
 import responses.DebitResponse
 import responses.StatusResponse
 import responses.TransferResponse
@@ -33,12 +34,12 @@ class TransferSaga(private val from: ActorRef, private val to: ActorRef) : Abstr
     }
 
     private fun handleFuture(sender: ActorRef, transfer: Operation.Transfer, zip: Future<Tuple2<Any, Any>>) = zip.onComplete({
-        val status = (it.get()._2 as DebitResponse).status
-        if (status == StatusResponse.ERROR) {
+        val debit = (it.get()._2 as DebitResponse)
+        if (StatusResponse.ERROR == debit.status) {
             compensation(transfer)
         }
 
-        sender.tell(buildTransfer(transfer,status), self)
+        sender.tell(buildTransfer(transfer, debit.status), self)
     }, context.system.dispatcher)
 
     private fun buildTransfer(transfer: Operation.Transfer, status: StatusResponse) = TransferResponse(
