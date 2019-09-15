@@ -39,3 +39,6 @@ jobs:
 
       # run tests!
       - run: mvn test
+
+    after_success:
+      - bash <(curl -s https://codecov.io/bash)
