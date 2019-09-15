@@ -1,6 +1,6 @@
 package source
 
-import commands.AccountCommand
+import commands.Operation
 import java.util.UUID.randomUUID
 import kotlin.test.assertEquals
 import org.junit.Test
@@ -27,20 +27,20 @@ class EventStoreTest {
 
     @Test
     fun `should return all events`() {
-        val commands = LinkedHashMap<String, ArrayList<AccountCommand>>()
+        val commands = LinkedHashMap<String, ArrayList<Operation>>()
         commands["etreardu"] = arrayListOf(
-                AccountCommand.Credit(10000, randomUUID().toString(), "etreardu"),
-                AccountCommand.Debit(220, randomUUID().toString(), "etreardu"),
-                AccountCommand.Credit(4803, randomUUID().toString(), "etreardu"))
+                Operation.Credit(10000, randomUUID().toString(), "etreardu"),
+                Operation.Debit(220, randomUUID().toString(), "etreardu"),
+                Operation.Credit(4803, randomUUID().toString(), "etreardu"))
 
         commands["sonore"] = arrayListOf(
-                AccountCommand.Credit(4000, randomUUID().toString(), "sonore"),
-                AccountCommand.Credit(2110, randomUUID().toString(), "sonore"),
-                AccountCommand.Debit(222, randomUUID().toString(), "sonore"))
+                Operation.Credit(4000, randomUUID().toString(), "sonore"),
+                Operation.Credit(2110, randomUUID().toString(), "sonore"),
+                Operation.Debit(222, randomUUID().toString(), "sonore"))
 
         commands["alotow"] = arrayListOf(
-                AccountCommand.Credit(8730, randomUUID().toString(), "alotow"),
-                AccountCommand.Debit(953, randomUUID().toString(), "alotow"))
+                Operation.Credit(8730, randomUUID().toString(), "alotow"),
+                Operation.Debit(953, randomUUID().toString(), "alotow"))
         eventStore = EventStore(commands)
 
         val events = eventStore.commands
@@ -50,20 +50,20 @@ class EventStoreTest {
 
     @Test
     fun `should return all events from account`() {
-        val commands = LinkedHashMap<String, ArrayList<AccountCommand>>()
+        val commands = LinkedHashMap<String, ArrayList<Operation>>()
         commands["etreardu"] = arrayListOf(
-                AccountCommand.Credit(10000, randomUUID().toString(), "etreardu"),
-                AccountCommand.Debit(220, randomUUID().toString(), "etreardu"),
-                AccountCommand.Credit(4803, randomUUID().toString(), "etreardu"))
+                Operation.Credit(10000, randomUUID().toString(), "etreardu"),
+                Operation.Debit(220, randomUUID().toString(), "etreardu"),
+                Operation.Credit(4803, randomUUID().toString(), "etreardu"))
 
         commands["sonore"] = arrayListOf(
-                AccountCommand.Credit(4000, randomUUID().toString(), "sonore"),
-                AccountCommand.Credit(2110, randomUUID().toString(), "sonore"),
-                AccountCommand.Debit(222, randomUUID().toString(), "sonore"))
+                Operation.Credit(4000, randomUUID().toString(), "sonore"),
+                Operation.Credit(2110, randomUUID().toString(), "sonore"),
+                Operation.Debit(222, randomUUID().toString(), "sonore"))
 
         commands["alotow"] = arrayListOf(
-                AccountCommand.Credit(8730, randomUUID().toString(), "alotow"),
-                AccountCommand.Debit(953, randomUUID().toString(), "alotow"))
+                Operation.Credit(8730, randomUUID().toString(), "alotow"),
+                Operation.Debit(953, randomUUID().toString(), "alotow"))
         eventStore = EventStore(commands)
 
         assertEquals(commands["etreardu"], eventStore.commands("etreardu"))
@@ -73,10 +73,10 @@ class EventStoreTest {
 
     @Test
     fun `should return added events from account`() {
-        val commands = LinkedHashMap<String, ArrayList<AccountCommand>>()
+        val commands = LinkedHashMap<String, ArrayList<Operation>>()
         eventStore = EventStore(commands)
 
-        eventStore.add(AccountCommand.Credit(10000, randomUUID().toString(), "etreardu"))
+        eventStore.add(Operation.Credit(10000, randomUUID().toString(), "etreardu"))
 
         assertEquals(commands["etreardu"], eventStore.commands("etreardu"))
     }

@@ -2,7 +2,7 @@ package actors
 
 import akka.actor.ActorSystem
 import akka.testkit.javadsl.TestKit
-import commands.AccountCommand
+import commands.Operation
 import junit.framework.Assert
 import org.junit.Before
 import org.junit.Test
@@ -28,13 +28,13 @@ class TransferSagaTest {
 
     @Test
     fun `should complete transfer between two accounts`() {
-        given(eventStore.commands("account1")).willReturn(arrayListOf<AccountCommand>())
-        given(eventStore.commands("account2")).willReturn(arrayListOf<AccountCommand>())
+        given(eventStore.commands("account1")).willReturn(arrayListOf<Operation>())
+        given(eventStore.commands("account2")).willReturn(arrayListOf<Operation>())
 
         val account1 = system.actorOf(Account.props("account1", eventStore), "account1")
         val account2 = system.actorOf(Account.props("account2", eventStore), "account2")
 
-        val transfer = AccountCommand.Transfer(100, "account2", "REQ", "account1")
+        val transfer = Operation.Transfer(100, "account2", "REQ", "account1")
         val transferSaga = system.actorOf(TransferSaga.props(account1, account2), "transfer")
 
         val probe = TestKit(system)
@@ -52,13 +52,13 @@ class TransferSagaTest {
 
     @Test
     fun `should fail transfer between two accounts`() {
-        given(eventStore.commands("account1")).willReturn(arrayListOf<AccountCommand>())
-        given(eventStore.commands("account2")).willReturn(arrayListOf<AccountCommand>())
+        given(eventStore.commands("account1")).willReturn(arrayListOf<Operation>())
+        given(eventStore.commands("account2")).willReturn(arrayListOf<Operation>())
 
         val account1 = system.actorOf(Account.props("account1", eventStore), "account1")
         val account2 = system.actorOf(Account.props("account2", eventStore), "account2")
 
-        val transfer = AccountCommand.Transfer(10000, "account2", "REQ", "account1")
+        val transfer = Operation.Transfer(10000, "account2", "REQ", "account1")
         val transferSaga = system.actorOf(TransferSaga.props(account1, account2), "transfer")
 
         val probe = TestKit(system)

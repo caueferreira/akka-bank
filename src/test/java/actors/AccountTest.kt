@@ -3,7 +3,7 @@ package actors
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.testkit.javadsl.TestKit
-import commands.AccountCommand
+import commands.Operation
 import errors.AccountWithoutBalanceForDebit
 import java.util.UUID.randomUUID
 import junit.framework.Assert.assertEquals
@@ -38,7 +38,7 @@ class AccountTest {
                 .build(accountId)
 
         val requestId = randomUUID().toString()
-        val read = AccountCommand.Read(requestId, accountId)
+        val read = Operation.Read(requestId, accountId)
         val probe = TestKit(system)
 
         account.tell(read, probe.ref)
@@ -54,17 +54,17 @@ class AccountTest {
     @Test
     fun `should compose balance of credits`() {
         val accountId = "accountTest"
-        val commands = arrayListOf<AccountCommand>(
-                AccountCommand.Credit(1000, randomUUID().toString(), accountId),
-                AccountCommand.Credit(332, randomUUID().toString(), accountId),
-                AccountCommand.Credit(9442, randomUUID().toString(), accountId))
+        val commands = arrayListOf<Operation>(
+                Operation.Credit(1000, randomUUID().toString(), accountId),
+                Operation.Credit(332, randomUUID().toString(), accountId),
+                Operation.Credit(9442, randomUUID().toString(), accountId))
 
         val account = AccountTestBuilder()
                 .withEvents(accountId, commands)
                 .build(accountId)
 
         val requestId = randomUUID().toString()
-        val read = AccountCommand.Read(requestId, accountId)
+        val read = Operation.Read(requestId, accountId)
         val probe = TestKit(system)
 
         account.tell(read, probe.ref)
@@ -80,16 +80,16 @@ class AccountTest {
     @Test
     fun `should compose balance of debits`() {
         val accountId = "accountTest"
-        val commands = arrayListOf<AccountCommand>(
-                AccountCommand.Debit(10, randomUUID().toString(), accountId),
-                AccountCommand.Debit(32, randomUUID().toString(), accountId))
+        val commands = arrayListOf<Operation>(
+                Operation.Debit(10, randomUUID().toString(), accountId),
+                Operation.Debit(32, randomUUID().toString(), accountId))
 
         val account = AccountTestBuilder()
                 .withEvents(accountId, commands)
                 .build(accountId)
 
         val requestId = randomUUID().toString()
-        val read = AccountCommand.Read(requestId, accountId)
+        val read = Operation.Read(requestId, accountId)
         val probe = TestKit(system)
 
         account.tell(read, probe.ref)
@@ -105,21 +105,21 @@ class AccountTest {
     @Test
     fun `should compose balance of credits and debits`() {
         val accountId = "accountTest"
-        val commands = arrayListOf<AccountCommand>(
-                AccountCommand.Credit(1000, randomUUID().toString(), accountId),
-                AccountCommand.Debit(10, randomUUID().toString(), accountId),
-                AccountCommand.Credit(2000, randomUUID().toString(), accountId),
-                AccountCommand.Debit(32, randomUUID().toString(), accountId),
-                AccountCommand.Debit(992, randomUUID().toString(), accountId),
-                AccountCommand.Debit(221, randomUUID().toString(), accountId),
-                AccountCommand.Credit(781, randomUUID().toString(), accountId))
+        val commands = arrayListOf<Operation>(
+                Operation.Credit(1000, randomUUID().toString(), accountId),
+                Operation.Debit(10, randomUUID().toString(), accountId),
+                Operation.Credit(2000, randomUUID().toString(), accountId),
+                Operation.Debit(32, randomUUID().toString(), accountId),
+                Operation.Debit(992, randomUUID().toString(), accountId),
+                Operation.Debit(221, randomUUID().toString(), accountId),
+                Operation.Credit(781, randomUUID().toString(), accountId))
 
         val account = AccountTestBuilder()
                 .withEvents(accountId, commands)
                 .build(accountId)
 
         val requestId = randomUUID().toString()
-        val read = AccountCommand.Read(requestId, accountId)
+        val read = Operation.Read(requestId, accountId)
         val probe = TestKit(system)
 
         account.tell(read, probe.ref)
@@ -139,7 +139,7 @@ class AccountTest {
                 .build(accountId)
 
         val requestId = randomUUID().toString()
-        val debit = AccountCommand.Debit(100000, requestId, accountId)
+        val debit = Operation.Debit(100000, requestId, accountId)
         val probe = TestKit(system)
 
         account.tell(debit, probe.ref)
@@ -151,15 +151,15 @@ class AccountTest {
     fun `should increase balance when credit event is created`() {
         val accountId = "accountTest"
 
-        val commands = arrayListOf<AccountCommand>(
-                AccountCommand.Credit(500, randomUUID().toString(), accountId))
+        val commands = arrayListOf<Operation>(
+                Operation.Credit(500, randomUUID().toString(), accountId))
 
         val account = AccountTestBuilder()
                 .withEvents(accountId, commands)
                 .build(accountId)
 
         val requestId = randomUUID().toString()
-        val credit = AccountCommand.Credit(1000, requestId, accountId)
+        val credit = Operation.Credit(1000, requestId, accountId)
         val probe = TestKit(system)
 
         account.tell(credit, probe.ref)
@@ -171,7 +171,7 @@ class AccountTest {
         assertEquals(1000, creditResponse.amount)
         assertEquals(StatusResponse.SUCCESS, creditResponse.status)
 
-        val read = AccountCommand.Read(requestId, accountId)
+        val read = Operation.Read(requestId, accountId)
 
         account.tell(read, probe.ref)
 
@@ -187,15 +187,15 @@ class AccountTest {
     fun `should reduce balance when debit event is created`() {
         val accountId = "accountTest"
 
-        val commands = arrayListOf<AccountCommand>(
-                AccountCommand.Credit(500, randomUUID().toString(), accountId))
+        val commands = arrayListOf<Operation>(
+                Operation.Credit(500, randomUUID().toString(), accountId))
 
         val account = AccountTestBuilder()
                 .withEvents(accountId, commands)
                 .build(accountId)
 
         val requestId = randomUUID().toString()
-        val debit = AccountCommand.Debit(1000, requestId, accountId)
+        val debit = Operation.Debit(1000, requestId, accountId)
         val probe = TestKit(system)
 
         account.tell(debit, probe.ref)
@@ -207,7 +207,7 @@ class AccountTest {
         assertEquals(1000, debitResponse.amount)
         assertEquals(StatusResponse.SUCCESS, debitResponse.status)
 
-        val read = AccountCommand.Read(requestId, accountId)
+        val read = Operation.Read(requestId, accountId)
 
         account.tell(read, probe.ref)
 
@@ -223,15 +223,15 @@ class AccountTest {
     fun `should increase negative balance when credit event is created`() {
         val accountId = "accountTest"
 
-        val commands = arrayListOf<AccountCommand>(
-                AccountCommand.Debit(500, randomUUID().toString(), accountId))
+        val commands = arrayListOf<Operation>(
+                Operation.Debit(500, randomUUID().toString(), accountId))
 
         val account = AccountTestBuilder()
                 .withEvents(accountId, commands)
                 .build(accountId)
 
         val requestId = randomUUID().toString()
-        val credit = AccountCommand.Credit(1000, requestId, accountId)
+        val credit = Operation.Credit(1000, requestId, accountId)
         val probe = TestKit(system)
 
         account.tell(credit, probe.ref)
@@ -243,7 +243,7 @@ class AccountTest {
         assertEquals(1000, creditResponse.amount)
         assertEquals(StatusResponse.SUCCESS, creditResponse.status)
 
-        val read = AccountCommand.Read(requestId, accountId)
+        val read = Operation.Read(requestId, accountId)
 
         account.tell(read, probe.ref)
 
@@ -257,7 +257,7 @@ class AccountTest {
 
     private inner class AccountTestBuilder {
 
-        fun withEvents(accountId: String, commands: ArrayList<AccountCommand>): AccountTestBuilder {
+        fun withEvents(accountId: String, commands: ArrayList<Operation>): AccountTestBuilder {
             given(eventStore.commands(accountId)).willReturn(commands)
             return this
         }

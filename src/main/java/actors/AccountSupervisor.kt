@@ -3,7 +3,7 @@ package actors
 import akka.actor.AbstractActor
 import akka.actor.ActorRef
 import akka.actor.Props
-import commands.AccountCommand
+import commands.Operation
 import commands.Command
 import java.util.UUID.randomUUID
 import kotlin.collections.HashMap
@@ -21,12 +21,12 @@ class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
 
     override fun createReceive(): Receive {
         return receiveBuilder()
-                .match(AccountCommand.Transfer::class.java, ::handleTransfer)
+                .match(Operation.Transfer::class.java, ::handleTransfer)
                 .match(Command::class.java, ::handleCommand)
                 .build()
     }
 
-    private fun handleTransfer(transfer: AccountCommand.Transfer) {
+    private fun handleTransfer(transfer: Operation.Transfer) {
         val transferSaga = TransferSaga.props(
                 accountIdToActor[transfer.accountId]!!,
                 accountIdToActor[transfer.receiverId]!!)

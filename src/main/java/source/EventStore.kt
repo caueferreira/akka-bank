@@ -1,15 +1,15 @@
 package source
 
-import commands.AccountCommand
+import commands.Operation
 import kotlin.collections.LinkedHashMap
 
-class EventStore(val commands: LinkedHashMap<String, ArrayList<AccountCommand>> = LinkedHashMap()) {
+class EventStore(val commands: LinkedHashMap<String, ArrayList<Operation>> = LinkedHashMap()) {
 
-    fun add(command: AccountCommand) {
+    fun add(command: Operation) {
         val accountCommands = commands.getOrDefault(command.accountId, arrayListOf())
         accountCommands.add(command)
         commands[command.accountId] = accountCommands
     }
 
-    fun commands(accountId: String): ArrayList<AccountCommand> = commands.getOrDefault(accountId, arrayListOf())
+    fun commands(accountId: String): ArrayList<Operation> = commands.getOrDefault(accountId, arrayListOf())
 }

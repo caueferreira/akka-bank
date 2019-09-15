@@ -2,7 +2,7 @@ package actors
 
 import akka.actor.ActorSystem
 import akka.testkit.javadsl.TestKit
-import commands.AccountCommand
+import commands.Operation
 import kotlin.test.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -29,11 +29,11 @@ class AccountSupervisorTest {
 
     @Test
     fun `supervisor should forward debit`() {
-        val events = linkedMapOf<String, ArrayList<AccountCommand>>()
+        val events = linkedMapOf<String, ArrayList<Operation>>()
         events["account1"] = arrayListOf()
         given(eventStore.commands).willReturn(events)
 
-        val debit = AccountCommand.Debit(100, "REQ", "account1")
+        val debit = Operation.Debit(100, "REQ", "account1")
         val supervisor = system.actorOf(AccountSupervisor.props(eventStore), "account-supervisor")
 
         val probe = TestKit(system)
@@ -47,11 +47,11 @@ class AccountSupervisorTest {
 
     @Test
     fun `supervisor should forward credit`() {
-        val events = linkedMapOf<String, ArrayList<AccountCommand>>()
+        val events = linkedMapOf<String, ArrayList<Operation>>()
         events["account1"] = arrayListOf()
         given(eventStore.commands).willReturn(events)
 
-        val credit = AccountCommand.Credit(100, "REQ", "account1")
+        val credit = Operation.Credit(100, "REQ", "account1")
         val supervisor = system.actorOf(AccountSupervisor.props(eventStore), "account-supervisor")
 
         val probe = TestKit(system)
@@ -65,12 +65,12 @@ class AccountSupervisorTest {
 
     @Test
     fun `supervisor should forward transfer`() {
-        val events = linkedMapOf<String, ArrayList<AccountCommand>>()
+        val events = linkedMapOf<String, ArrayList<Operation>>()
         events["account1"] = arrayListOf()
         events["account2"] = arrayListOf()
         given(eventStore.commands).willReturn(events)
 
-        val transfer = AccountCommand.Transfer(100, "account2", "REQ", "account1")
+        val transfer = Operation.Transfer(100, "account2", "REQ", "account1")
         val supervisor = system.actorOf(AccountSupervisor.props(eventStore), "account-supervisor")
 
         val probe = TestKit(system)

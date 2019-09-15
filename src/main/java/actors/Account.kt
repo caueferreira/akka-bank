@@ -2,7 +2,7 @@ package actors
 
 import akka.actor.AbstractActor
 import akka.actor.Props
-import commands.AccountCommand
+import commands.Operation
 import errors.AccountWithoutBalanceForDebit
 import responses.BalanceResponse
 import responses.CreditResponse
@@ -19,52 +19,37 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
     }
 
     override fun createReceive(): Receive = receiveBuilder()
-            .match(AccountCommand.Read::class.java) { read ->
+            .match(Operation.Read::class.java) { read ->
                 save(read)
-                sender.tell(BalanceResponse(
-                        balance,
-                        StatusResponse.SUCCESS,
-                        read.requestId,
-                        id
-                ), self)
+                sender.tell(BalanceResponse(balance, StatusResponse.SUCCESS, read.requestId, id), self)
             }
-            .match(AccountCommand.Debit::class.java) { debit ->
+            .match(Operation.Debit::class.java) { debit ->
                 if (hasBalanceForDebit(debit.amount)) {
                     save(debit)
                     balance -= debit.amount
-                    sender.tell(DebitResponse(
-                            debit.amount,
-                            StatusResponse.SUCCESS,
-                            debit.requestId,
-                            debit.accountId
-                    ), self)
+                    sender.tell(buildDebitResponse(debit), self)
                 } else {
                     sender.tell(AccountWithoutBalanceForDebit(), self)
-                    AccountWithoutBalanceForDebit()
                 }
             }
-            .match(AccountCommand.Credit::class.java) { credit ->
+            .match(Operation.Credit::class.java) { credit ->
                 save(credit)
                 balance += credit.amount
-                sender.tell(CreditResponse(
-                        credit.amount,
-                        StatusResponse.SUCCESS,
-                        credit.requestId,
-                        credit.accountId
-                ), self)
+                sender.tell(buildCreditResponse(credit), self)
             }.build()
 
-    private fun save(read: AccountCommand) {
-        eventStore.add(read)
-    }
+    private fun save(read: Operation) = eventStore.add(read)
+
+    private fun buildCreditResponse(credit: Operation.Credit) = CreditResponse(credit.amount, StatusResponse.SUCCESS, credit.requestId, credit.accountId)
+    private fun buildDebitResponse(debit: Operation.Debit) = DebitResponse(debit.amount, StatusResponse.SUCCESS, debit.requestId, debit.accountId)
 
     private fun hasBalanceForDebit(amount: Long) = balance - amount > -1000
 
     override fun preStart() {
         eventStore.commands(id).forEach {
             when (it) {
-                is AccountCommand.Debit -> balance -= it.amount
-                is AccountCommand.Credit -> balance += it.amount
+                is Operation.Debit -> balance -= it.amount
+                is Operation.Credit -> balance += it.amount
             }
         }
     }
