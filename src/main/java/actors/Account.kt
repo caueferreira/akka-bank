@@ -18,24 +18,32 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
     }
 
     override fun createReceive(): Receive = receiveBuilder()
-            .match(Operation.Read::class.java) { read ->
-                save(read)
-                sender.tell(BalanceResponse(balance, StatusResponse.SUCCESS, read.requestId, id), self)
-            }
-            .match(Operation.Debit::class.java) { debit ->
-                if (hasBalanceForDebit(debit.amount)) {
-                    save(debit)
-                    balance -= debit.amount
-                    sender.tell(buildDebitResponse(debit), self)
-                } else {
-                    sender.tell(buildDebitResponse(debit, StatusResponse.ERROR), self)
-                }
-            }
-            .match(Operation.Credit::class.java) { credit ->
-                save(credit)
-                balance += credit.amount
-                sender.tell(buildCreditResponse(credit), self)
-            }.build()
+            .match(Operation.Read::class.java) { handleRead(it) }
+            .match(Operation.Debit::class.java) { handleDebit(it) }
+            .match(Operation.Credit::class.java) { handleCredit(it) }
+            .build()
+
+
+    private fun handleRead(read: Operation.Read) {
+        save(read)
+        sender.tell(BalanceResponse(balance, StatusResponse.SUCCESS, read.requestId, id), self)
+    }
+
+    private fun handleDebit(debit: Operation.Debit) {
+        if (hasBalanceForDebit(debit.amount)) {
+            save(debit)
+            balance -= debit.amount
+            sender.tell(buildDebitResponse(debit), self)
+        } else {
+            sender.tell(buildDebitResponse(debit, StatusResponse.ERROR), self)
+        }
+    }
+
+    private fun handleCredit(credit: Operation.Credit) {
+        save(credit)
+        balance += credit.amount
+        sender.tell(buildCreditResponse(credit), self)
+    }
 
     private fun save(operation: Operation) = eventStore.add(operation)
 
