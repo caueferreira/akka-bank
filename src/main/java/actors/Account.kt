@@ -1,14 +1,14 @@
 package actors
 
-import responses.CreditResponse
-import responses.DebitResponse
-import source.EventStore
 import akka.actor.AbstractActor
 import akka.actor.Props
 import commands.AccountCommand
 import errors.AccountWithoutBalanceForDebit
 import responses.BalanceResponse
+import responses.CreditResponse
+import responses.DebitResponse
 import responses.StatusResponse
+import source.EventStore
 
 class Account(private val id: String, private val eventStore: EventStore, var balance: Long = 0) : AbstractActor() {
 

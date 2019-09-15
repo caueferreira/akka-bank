@@ -1,9 +1,9 @@
 package source
 
 import commands.AccountCommand
-import org.junit.Test
 import java.util.UUID.randomUUID
 import kotlin.test.assertEquals
+import org.junit.Test
 
 class EventStoreTest {
 

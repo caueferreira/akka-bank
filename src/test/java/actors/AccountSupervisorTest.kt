@@ -3,6 +3,7 @@ package actors
 import akka.actor.ActorSystem
 import akka.testkit.javadsl.TestKit
 import commands.AccountCommand
+import kotlin.test.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.BDDMockito.given
@@ -13,7 +14,6 @@ import responses.DebitResponse
 import responses.StatusResponse
 import responses.TransferResponse
 import source.EventStore
-import kotlin.test.assertEquals
 
 class AccountSupervisorTest {
     @Mock

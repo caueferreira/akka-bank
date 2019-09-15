@@ -1,6 +1,8 @@
 package actors
 
-import akka.actor.*
+import akka.actor.AbstractActor
+import akka.actor.ActorRef
+import akka.actor.Props
 import akka.pattern.Patterns.ask
 import commands.AccountCommand
 import errors.AccountWithoutBalanceForDebit
@@ -35,7 +37,6 @@ class TransferSaga(private val from: ActorRef, private val to: ActorRef, private
                         command.requestId,
                         command.receiverId
                 ), 200)
-
 
         val currentSender = sender
         credit.zip(debit).onComplete({

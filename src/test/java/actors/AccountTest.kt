@@ -5,6 +5,7 @@ import akka.actor.ActorSystem
 import akka.testkit.javadsl.TestKit
 import commands.AccountCommand
 import errors.AccountWithoutBalanceForDebit
+import java.util.UUID.randomUUID
 import junit.framework.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -15,7 +16,6 @@ import responses.BalanceResponse
 import responses.CreditResponse
 import responses.DebitResponse
 import source.EventStore
-import java.util.UUID.randomUUID
 
 class AccountTest {
 

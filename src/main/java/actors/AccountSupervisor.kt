@@ -1,18 +1,13 @@
 package actors
 
-import source.EventStore
 import akka.actor.AbstractActor
 import akka.actor.ActorRef
 import akka.actor.Props
 import commands.AccountCommand
 import commands.Command
-import akka.actor.SupervisorStrategy
-import akka.japi.pf.DeciderBuilder
-import akka.actor.OneForOneStrategy
-import errors.AccountWithoutBalanceForDebit
-import java.lang.Exception
-import java.time.Duration
-import java.util.*
+import java.util.UUID.randomUUID
+import kotlin.collections.HashMap
+import source.EventStore
 
 class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
 
@@ -38,13 +33,12 @@ class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
                 accountIdToActor[transfer.receiverId]!!,
                 transfer)
 
-        context.actorOf(transferSaga, "transfer-saga:${transfer.accountId}:${UUID.randomUUID()}")
+        context.actorOf(transferSaga, "transfer-saga:${transfer.accountId}:${randomUUID()}")
                 .forward(transfer, context)
     }
 
     private fun handleCommand(command: Command) {
         accountIdToActor[command.accountId]?.forward(command, context)
-
     }
 
     override fun preStart() {
