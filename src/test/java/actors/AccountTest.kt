@@ -15,6 +15,7 @@ import org.mockito.MockitoAnnotations
 import responses.BalanceResponse
 import responses.CreditResponse
 import responses.DebitResponse
+import responses.StatusResponse
 import source.EventStore
 
 class AccountTest {
@@ -47,6 +48,7 @@ class AccountTest {
         assertEquals(requestId, response.requestId)
         assertEquals(accountId, response.accountId)
         assertEquals(0, response.balance)
+        assertEquals(StatusResponse.SUCCESS, response.status)
     }
 
     @Test
@@ -72,6 +74,7 @@ class AccountTest {
         assertEquals(requestId, response.requestId)
         assertEquals(accountId, response.accountId)
         assertEquals(10774, response.balance)
+        assertEquals(StatusResponse.SUCCESS, response.status)
     }
 
     @Test
@@ -96,6 +99,7 @@ class AccountTest {
         assertEquals(requestId, response.requestId)
         assertEquals(accountId, response.accountId)
         assertEquals(-42, response.balance)
+        assertEquals(StatusResponse.SUCCESS, response.status)
     }
 
     @Test
@@ -125,6 +129,7 @@ class AccountTest {
         assertEquals(requestId, response.requestId)
         assertEquals(accountId, response.accountId)
         assertEquals(2526, response.balance)
+        assertEquals(StatusResponse.SUCCESS, response.status)
     }
 
     @Test
@@ -164,6 +169,7 @@ class AccountTest {
         assertEquals(requestId, creditResponse.requestId)
         assertEquals(accountId, creditResponse.accountId)
         assertEquals(1000, creditResponse.amount)
+        assertEquals(StatusResponse.SUCCESS, creditResponse.status)
 
         val read = AccountCommand.Read(requestId, accountId)
 
@@ -174,6 +180,7 @@ class AccountTest {
         assertEquals(requestId, readResponse.requestId)
         assertEquals(accountId, readResponse.accountId)
         assertEquals(1500, readResponse.balance)
+        assertEquals(StatusResponse.SUCCESS, readResponse.status)
     }
 
     @Test
@@ -198,6 +205,7 @@ class AccountTest {
         assertEquals(requestId, debitResponse.requestId)
         assertEquals(accountId, debitResponse.accountId)
         assertEquals(1000, debitResponse.amount)
+        assertEquals(StatusResponse.SUCCESS, debitResponse.status)
 
         val read = AccountCommand.Read(requestId, accountId)
 
@@ -208,6 +216,7 @@ class AccountTest {
         assertEquals(requestId, readResponse.requestId)
         assertEquals(accountId, readResponse.accountId)
         assertEquals(-500, readResponse.balance)
+        assertEquals(StatusResponse.SUCCESS, readResponse.status)
     }
 
     @Test
@@ -232,6 +241,7 @@ class AccountTest {
         assertEquals(requestId, creditResponse.requestId)
         assertEquals(accountId, creditResponse.accountId)
         assertEquals(1000, creditResponse.amount)
+        assertEquals(StatusResponse.SUCCESS, creditResponse.status)
 
         val read = AccountCommand.Read(requestId, accountId)
 
@@ -242,6 +252,7 @@ class AccountTest {
         assertEquals(requestId, readResponse.requestId)
         assertEquals(accountId, readResponse.accountId)
         assertEquals(500, readResponse.balance)
+        assertEquals(StatusResponse.SUCCESS, readResponse.status)
     }
 
     private inner class AccountTestBuilder {
