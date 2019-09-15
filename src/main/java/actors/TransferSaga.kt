@@ -4,10 +4,11 @@ import akka.actor.AbstractActor
 import akka.actor.ActorRef
 import akka.actor.Props
 import akka.pattern.Patterns.ask
-import commands.AccountCommand
+import commands.*
 import errors.AccountWithoutBalanceForDebit
 import responses.StatusResponse
 import responses.TransferResponse
+import java.time.Duration
 
 class TransferSaga(private val from: ActorRef, private val to: ActorRef) : AbstractActor() {
 
@@ -24,19 +25,8 @@ class TransferSaga(private val from: ActorRef, private val to: ActorRef) : Abstr
     }
 
     private fun transfer(transfer: AccountCommand.Transfer) {
-        val debit = ask(from,
-                AccountCommand.Debit(
-                        transfer.amount,
-                        transfer.requestId,
-                        transfer.accountId
-                ), 200)
-
-        val credit = ask(to,
-                AccountCommand.Credit(
-                        transfer.amount,
-                        transfer.requestId,
-                        transfer.receiverId
-                ), 200)
+        val debit = ask(from, transfer.debit(), 200)
+        val credit = ask(to, transfer.credit(), 200)
 
         val currentSender = sender
         credit.zip(debit).onComplete({
@@ -61,8 +51,6 @@ class TransferSaga(private val from: ActorRef, private val to: ActorRef) : Abstr
             transfer.accountId)
 
     private fun compensation(transfer: AccountCommand.Transfer) {
-        to.forward(AccountCommand.Debit(
-                transfer.amount, transfer.requestId, transfer.receiverId
-        ), context)
+        to.forward(transfer.compensation(), context)
     }
 }
