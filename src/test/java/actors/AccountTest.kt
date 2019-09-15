@@ -154,10 +154,10 @@ class AccountTest {
                 .build(accountId)
 
         val requestId = randomUUID().toString()
-        val debit = AccountCommand.Credit(1000, requestId, accountId)
+        val credit = AccountCommand.Credit(1000, requestId, accountId)
         val probe = TestKit(system)
 
-        account.tell(debit, probe.ref)
+        account.tell(credit, probe.ref)
 
         val creditResponse = probe.expectMsgClass(CreditResponse::class.java)
 
@@ -177,7 +177,7 @@ class AccountTest {
     }
 
     @Test
-    fun `should reduce balance when credit event is created`() {
+    fun `should reduce balance when debit event is created`() {
         val accountId = "accountTest"
 
         val commands = arrayListOf<AccountCommand>(
@@ -208,6 +208,40 @@ class AccountTest {
         assertEquals(requestId, readResponse.requestId)
         assertEquals(accountId, readResponse.accountId)
         assertEquals(-500, readResponse.balance)
+    }
+
+    @Test
+    fun `should increase negative balance when credit event is created`() {
+        val accountId = "accountTest"
+
+        val commands = arrayListOf<AccountCommand>(
+                AccountCommand.Debit(500, randomUUID().toString(), accountId))
+
+        val account = AccountTestBuilder()
+                .withEvents(accountId, commands)
+                .build(accountId)
+
+        val requestId = randomUUID().toString()
+        val credit = AccountCommand.Credit(1000, requestId, accountId)
+        val probe = TestKit(system)
+
+        account.tell(credit, probe.ref)
+
+        val creditResponse = probe.expectMsgClass(CreditResponse::class.java)
+
+        assertEquals(requestId, creditResponse.requestId)
+        assertEquals(accountId, creditResponse.accountId)
+        assertEquals(1000, creditResponse.amount)
+
+        val read = AccountCommand.Read(requestId, accountId)
+
+        account.tell(read, probe.ref)
+
+        val readResponse = probe.expectMsgClass(BalanceResponse::class.java)
+
+        assertEquals(requestId, readResponse.requestId)
+        assertEquals(accountId, readResponse.accountId)
+        assertEquals(500, readResponse.balance)
     }
 
     private inner class AccountTestBuilder {
