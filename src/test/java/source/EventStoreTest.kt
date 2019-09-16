@@ -7,77 +7,96 @@ import org.junit.Test
 
 class EventStoreTest {
 
-    private lateinit var eventStore: EventStore
+    private var account1 = "account1"
+    private var account2 = "account2"
+    private var account3 = "account3"
 
     @Test
     fun `should retrieve empty events`() {
-        eventStore = EventStore()
-        val commands = eventStore.commands
+        val eventStore = EventStoreBuilder().build()
 
-        assertEquals(commands, LinkedHashMap())
+        assertEquals(eventStore.commands, LinkedHashMap())
     }
 
     @Test
     fun `should retrieve empty events from account`() {
-        eventStore = EventStore()
-        val commands = eventStore.commands("account1")
+        val eventStore = EventStoreBuilder().build()
 
-        assertEquals(commands, arrayListOf())
+        assertEquals(eventStore.commands(account1), arrayListOf())
     }
 
     @Test
     fun `should return all events`() {
-        val commands = LinkedHashMap<String, ArrayList<Operation>>()
-        commands["etreardu"] = arrayListOf(
-                Operation.Credit(10000, randomUUID().toString(), "etreardu"),
-                Operation.Debit(220, randomUUID().toString(), "etreardu"),
-                Operation.Credit(4803, randomUUID().toString(), "etreardu"))
+        val events = LinkedHashMap<String, ArrayList<Operation>>()
+        events[account1] = arrayListOf(
+                Operation.Credit(10000, randomUUID().toString(), account1),
+                Operation.Debit(220, randomUUID().toString(), account1),
+                Operation.Credit(4803, randomUUID().toString(), account1))
+        events[account2] = arrayListOf(
+                Operation.Credit(4000, randomUUID().toString(), account2),
+                Operation.Credit(2110, randomUUID().toString(), account2),
+                Operation.Debit(222, randomUUID().toString(), account2))
+        events[account3] = arrayListOf(
+                Operation.Credit(8730, randomUUID().toString(), account3),
+                Operation.Debit(953, randomUUID().toString(), account3))
 
-        commands["sonore"] = arrayListOf(
-                Operation.Credit(4000, randomUUID().toString(), "sonore"),
-                Operation.Credit(2110, randomUUID().toString(), "sonore"),
-                Operation.Debit(222, randomUUID().toString(), "sonore"))
 
-        commands["alotow"] = arrayListOf(
-                Operation.Credit(8730, randomUUID().toString(), "alotow"),
-                Operation.Debit(953, randomUUID().toString(), "alotow"))
-        eventStore = EventStore(commands)
+        val eventStore = EventStoreBuilder()
+                .addEvents(account1, events[account1])
+                .addEvents(account2, events[account2])
+                .addEvents(account3, events[account3])
+                .build()
 
-        val events = eventStore.commands
-
-        assertEquals(commands, events)
+        assertEquals(events, eventStore.commands)
     }
 
     @Test
     fun `should return all events from account`() {
-        val commands = LinkedHashMap<String, ArrayList<Operation>>()
-        commands["etreardu"] = arrayListOf(
-                Operation.Credit(10000, randomUUID().toString(), "etreardu"),
-                Operation.Debit(220, randomUUID().toString(), "etreardu"),
-                Operation.Credit(4803, randomUUID().toString(), "etreardu"))
+        val events = LinkedHashMap<String, ArrayList<Operation>>()
+        events[account1] = arrayListOf(
+                Operation.Credit(10000, randomUUID().toString(), account1),
+                Operation.Debit(220, randomUUID().toString(), account1),
+                Operation.Credit(4803, randomUUID().toString(), account1))
+        events[account2] = arrayListOf(
+                Operation.Credit(4000, randomUUID().toString(), account2),
+                Operation.Credit(2110, randomUUID().toString(), account2),
+                Operation.Debit(222, randomUUID().toString(), account2))
+        events[account3] = arrayListOf(
+                Operation.Credit(8730, randomUUID().toString(), account3),
+                Operation.Debit(953, randomUUID().toString(), account3))
 
-        commands["sonore"] = arrayListOf(
-                Operation.Credit(4000, randomUUID().toString(), "sonore"),
-                Operation.Credit(2110, randomUUID().toString(), "sonore"),
-                Operation.Debit(222, randomUUID().toString(), "sonore"))
 
-        commands["alotow"] = arrayListOf(
-                Operation.Credit(8730, randomUUID().toString(), "alotow"),
-                Operation.Debit(953, randomUUID().toString(), "alotow"))
-        eventStore = EventStore(commands)
+        val eventStore = EventStoreBuilder()
+                .addEvents(account1, events[account1])
+                .addEvents(account2, events[account2])
+                .addEvents(account3, events[account3])
+                .build()
 
-        assertEquals(commands["etreardu"], eventStore.commands("etreardu"))
-        assertEquals(commands["sonore"], eventStore.commands("sonore"))
-        assertEquals(commands["alotow"], eventStore.commands("alotow"))
+        assertEquals(events[account1], eventStore.commands(account1))
+        assertEquals(events[account2], eventStore.commands(account2))
+        assertEquals(events[account3], eventStore.commands(account3))
     }
 
     @Test
     fun `should return added events from account`() {
-        val commands = LinkedHashMap<String, ArrayList<Operation>>()
-        eventStore = EventStore(commands)
+        val eventStore = EventStoreBuilder().build()
 
-        eventStore.add(Operation.Credit(10000, randomUUID().toString(), "etreardu"))
+        val event = Operation.Credit(10000, randomUUID().toString(), account1)
+        eventStore.add(event)
 
-        assertEquals(commands["etreardu"], eventStore.commands("etreardu"))
+        assertEquals(arrayListOf<Operation>(event), eventStore.commands(account1))
+    }
+
+    private inner class EventStoreBuilder {
+        private var commands = LinkedHashMap<String, ArrayList<Operation>>()
+
+        fun addEvents(accountId: String, events: ArrayList<Operation>?): EventStoreBuilder {
+            events?.let {
+                commands[accountId] = events
+            }
+            return this
+        }
+
+        fun build() = EventStore(commands)
     }
 }
