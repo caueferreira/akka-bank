@@ -47,6 +47,7 @@ class AccountTest {
         val response = probe.expectMsgClass(BalanceResponse::class.java)
 
         assertEquals(expected, response)
+        kotlin.test.assertEquals(expected.balance, response.balance)
     }
 
     @Test

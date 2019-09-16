@@ -55,6 +55,7 @@ class AccountSupervisorTest {
         val response = probe.expectMsgClass(DebitResponse::class.java)
 
         assertEquals(expected, response)
+        assertEquals(expected.amount, response.amount)
     }
 
     @Test
@@ -76,6 +77,7 @@ class AccountSupervisorTest {
         val response = probe.expectMsgClass(CreditResponse::class.java)
 
         assertEquals(expected, response)
+        assertEquals(expected.amount, response.amount)
     }
 
     @Test

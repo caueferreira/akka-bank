@@ -102,6 +102,7 @@ class TransferSagaTest {
 
         assertEquals(expected, response)
         assertEquals(expected.receiverId, response.receiverId)
+        assertEquals(expected.amount, response.amount)
     }
 
     private inner class TransferSagaBuilder {
