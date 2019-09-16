@@ -23,7 +23,6 @@ class BankServer : AllDirectives() {
         val binding = http.bindAndHandle(routeFlow,
                 ConnectHttp.toHost("localhost", 9097), materializer)
 
-
         println("Server online at http://localhost:9097/\nPress RETURN to stop...")
         System.`in`.read()
         binding
