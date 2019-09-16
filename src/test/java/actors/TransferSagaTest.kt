@@ -52,6 +52,42 @@ class TransferSagaTest {
     }
 
     @Test
+    fun `should complete transfer between two accounts even when credit already executed`() {
+        val transfer = Operation.Transfer(100, account2, randomUUID().toString(), account1)
+        val credit = Operation.Credit(100, account2, transfer.requestId)
+
+        val transferSaga = TransferSagaBuilder()
+                .withEvents(account1, arrayListOf())
+                .withEvents(account2, arrayListOf(credit))
+                .build(account1, account2)
+
+        transferSaga.tell(transfer, probe.ref)
+
+        val expected = TransferResponse(transfer.amount, transfer.receiverId, StatusResponse.SUCCESS, transfer.requestId, transfer.accountId)
+        val response = probe.expectMsgClass(TransferResponse::class.java)
+
+        assertEquals(expected, response)
+    }
+
+    @Test
+    fun `should complete transfer between two accounts even when debit already executed`() {
+        val transfer = Operation.Transfer(100, account2, randomUUID().toString(), account1)
+        val debit = Operation.Debit(100, account1, transfer.requestId)
+
+        val transferSaga = TransferSagaBuilder()
+                .withEvents(account1, arrayListOf(debit))
+                .withEvents(account2, arrayListOf())
+                .build(account1, account2)
+
+        transferSaga.tell(transfer, probe.ref)
+
+        val expected = TransferResponse(transfer.amount, transfer.receiverId, StatusResponse.SUCCESS, transfer.requestId, transfer.accountId)
+        val response = probe.expectMsgClass(TransferResponse::class.java)
+
+        assertEquals(expected, response)
+    }
+
+    @Test
     fun `should fail transfer between two accounts`() {
         val transferSaga = TransferSagaBuilder()
                 .withEvents(account1, arrayListOf())
@@ -65,6 +101,7 @@ class TransferSagaTest {
         val response = probe.expectMsgClass(TransferResponse::class.java)
 
         assertEquals(expected, response)
+        assertEquals(expected.receiverId, response.receiverId)
     }
 
     private inner class TransferSagaBuilder {

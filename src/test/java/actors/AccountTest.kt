@@ -189,6 +189,38 @@ class AccountTest {
         assertEquals(expectedCreditResponse, creditResponse)
     }
 
+    @Test
+    fun `should throw credit already executed`(){
+        val credit = Operation.Credit(1000, randomUUID().toString(), accountId)
+
+        val account = AccountTestBuilder()
+                .withEvents(accountId, arrayListOf(credit))
+                .build(accountId)
+
+        account.tell(credit, probe.ref)
+
+        val expected = CreditResponse(credit.amount, StatusResponse.ALREADY_EXECUTED, credit.requestId, credit.accountId)
+        val response = probe.expectMsgClass(CreditResponse::class.java)
+
+        assertEquals(expected, response)
+    }
+
+    @Test
+    fun `should throw debit already executed`(){
+        val debit = Operation.Debit(1000, randomUUID().toString(), accountId)
+
+        val account = AccountTestBuilder()
+                .withEvents(accountId, arrayListOf(debit))
+                .build(accountId)
+
+        account.tell(debit, probe.ref)
+
+        val expected = DebitResponse(debit.amount, StatusResponse.ALREADY_EXECUTED, debit.requestId, debit.accountId)
+        val response = probe.expectMsgClass(DebitResponse::class.java)
+
+        assertEquals(expected, response)
+    }
+
     private inner class AccountTestBuilder {
 
         fun withEvents(accountId: String, commands: ArrayList<Operation>): AccountTestBuilder {

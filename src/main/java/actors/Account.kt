@@ -30,16 +30,27 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
     }
 
     private fun handleDebit(debit: Operation.Debit) {
+        if (hasExecutedOperation(debit)) {
+            sender.tell(buildDebitResponse(debit, StatusResponse.ALREADY_EXECUTED), self)
+            return
+        }
+
         if (hasBalanceForDebit(debit.amount)) {
             save(debit)
             balance -= debit.amount
             sender.tell(buildDebitResponse(debit), self)
-        } else {
-            sender.tell(buildDebitResponse(debit, StatusResponse.ERROR), self)
+            return
         }
+
+        sender.tell(buildDebitResponse(debit, StatusResponse.ERROR), self)
     }
 
     private fun handleCredit(credit: Operation.Credit) {
+        if (hasExecutedOperation(credit)) {
+            sender.tell(buildCreditResponse(credit, StatusResponse.ALREADY_EXECUTED), self)
+            return
+        }
+
         save(credit)
         balance += credit.amount
         sender.tell(buildCreditResponse(credit), self)
@@ -47,9 +58,10 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
 
     private fun save(operation: Operation) = eventStore.add(operation)
 
-    private fun buildCreditResponse(credit: Operation.Credit) = CreditResponse(credit.amount, StatusResponse.SUCCESS, credit.requestId, credit.accountId)
+    private fun buildCreditResponse(credit: Operation.Credit, status: StatusResponse = StatusResponse.SUCCESS) = CreditResponse(credit.amount, status, credit.requestId, credit.accountId)
     private fun buildDebitResponse(debit: Operation.Debit, status: StatusResponse = StatusResponse.SUCCESS) = DebitResponse(debit.amount, status, debit.requestId, debit.accountId)
 
+    private fun hasExecutedOperation(operation: Operation) = eventStore.commands(id).contains(operation)
     private fun hasBalanceForDebit(amount: Long) = balance - amount > -1000
 
     override fun preStart() {

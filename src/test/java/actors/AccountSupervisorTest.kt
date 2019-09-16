@@ -100,6 +100,76 @@ class AccountSupervisorTest {
         assertEquals(expected, response)
     }
 
+    @Test
+    fun `supervisor should forward error transfer`() {
+        val events = object : LinkedHashMap<String, ArrayList<Operation>>() {
+            init {
+                put(account1, arrayListOf())
+                put(account2, arrayListOf())
+            }
+        }
+
+        val supervisor = AccountSupervisorBuilder()
+                .withEvents(events)
+                .build()
+
+        val transfer = Operation.Transfer(100000, account2, randomUUID().toString(), account1)
+        supervisor.tell(transfer, probe.ref)
+
+        val expected = TransferResponse(transfer.amount, transfer.receiverId, StatusResponse.ERROR, transfer.requestId, transfer.accountId)
+        val response = probe.expectMsgClass(TransferResponse::class.java)
+
+        assertEquals(expected, response)
+    }
+
+    @Test
+    fun `supervisor should forward transfer even when credit already executed`() {
+        val transfer = Operation.Transfer(100, account2, randomUUID().toString(), account1)
+        val credit = Operation.Credit(100, account2, transfer.receiverId)
+
+        val events = object : LinkedHashMap<String, ArrayList<Operation>>() {
+            init {
+                put(account1, arrayListOf())
+                put(account2, arrayListOf(credit))
+            }
+        }
+
+        val supervisor = AccountSupervisorBuilder()
+                .withEvents(events)
+                .build()
+
+        supervisor.tell(transfer, probe.ref)
+
+        val expected = TransferResponse(transfer.amount, transfer.receiverId, StatusResponse.SUCCESS, transfer.requestId, transfer.accountId)
+        val response = probe.expectMsgClass(TransferResponse::class.java)
+
+        assertEquals(expected, response)
+    }
+
+    @Test
+    fun `supervisor should forward transfer even when debit already executed`() {
+        val transfer = Operation.Transfer(100, account2, randomUUID().toString(), account1)
+        val debit = Operation.Debit(100, account1, transfer.receiverId)
+
+        val events = object : LinkedHashMap<String, ArrayList<Operation>>() {
+            init {
+                put(account1, arrayListOf(debit))
+                put(account2, arrayListOf())
+            }
+        }
+
+        val supervisor = AccountSupervisorBuilder()
+                .withEvents(events)
+                .build()
+
+        supervisor.tell(transfer, probe.ref)
+
+        val expected = TransferResponse(transfer.amount, transfer.receiverId, StatusResponse.SUCCESS, transfer.requestId, transfer.accountId)
+        val response = probe.expectMsgClass(TransferResponse::class.java)
+
+        assertEquals(expected, response)
+    }
+
     private inner class AccountSupervisorBuilder {
         private val supervisor = "account-supervisor"
 

@@ -1,5 +1,5 @@
 package responses
 
 enum class StatusResponse {
-    SUCCESS, ERROR
+    SUCCESS, ERROR, ALREADY_EXECUTED
 }
