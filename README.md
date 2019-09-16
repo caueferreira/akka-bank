@@ -16,6 +16,11 @@ The application shows four operations:
 
 Akka-Bank was developer with event sourcing in mind, it has an **EventStore** class, that mocks the events of the accounts and when an **Account** actor is instanciated it will check for his events and compose its balance. The **AccountSupervisor** is responsible for forwarding all events to the responsible actor and the **TransferSaga** is exclusively responsible for handling the transferency business rules. The account actors were developer with idempotency, so if some reason the same operation is to be requested, it will return a proper message instead of re-executing the operation.
 
+## Stack
+ * Akka
+ * Akka-Http
+ * Junit
+
 ## Running
 
 **Runing tests**
