@@ -27,6 +27,7 @@ class AccountSupervisorTest {
 
     private var account1 = "account1"
     private var account2 = "account2"
+
     @Before
     fun `before each`() {
         MockitoAnnotations.initMocks(this)
@@ -90,7 +91,7 @@ class AccountSupervisorTest {
                 .withEvents(events)
                 .build()
 
-        val transfer = Operation.Transfer(100, randomUUID().toString(), account1, account2)
+        val transfer = Operation.Transfer(100, account2, randomUUID().toString(), account1)
         supervisor.tell(transfer, probe.ref)
 
         val expected = TransferResponse(transfer.amount, transfer.receiverId, StatusResponse.SUCCESS, transfer.requestId, transfer.accountId)
