@@ -21,242 +21,172 @@ class AccountTest {
 
     @Mock
     private lateinit var eventStore: EventStore
+
     private lateinit var system: ActorSystem
+    private lateinit var probe: TestKit
+
+    private var accountId = "account1"
 
     @Before
     fun `before each`() {
         MockitoAnnotations.initMocks(this)
 
         system = ActorSystem.create()
+        probe = TestKit(system)
     }
 
     @Test
     fun `should compose balance equals zero`() {
-        val accountId = "accountTest"
         val account = AccountTestBuilder()
                 .build(accountId)
 
-        val requestId = randomUUID().toString()
-        val read = Operation.Read(requestId, accountId)
-        val probe = TestKit(system)
-
+        val read = Operation.Read(randomUUID().toString(), accountId)
         account.tell(read, probe.ref)
 
+        val expected = BalanceResponse(0, StatusResponse.SUCCESS, read.requestId, read.accountId)
         val response = probe.expectMsgClass(BalanceResponse::class.java)
 
-        assertEquals(requestId, response.requestId)
-        assertEquals(accountId, response.accountId)
-        assertEquals(0, response.balance)
-        assertEquals(StatusResponse.SUCCESS, response.status)
+        assertEquals(expected, response)
     }
 
     @Test
     fun `should compose balance of credits`() {
-        val accountId = "accountTest"
-        val commands = arrayListOf<Operation>(
-                Operation.Credit(1000, randomUUID().toString(), accountId),
-                Operation.Credit(332, randomUUID().toString(), accountId),
-                Operation.Credit(9442, randomUUID().toString(), accountId))
-
         val account = AccountTestBuilder()
-                .withEvents(accountId, commands)
+                .withEvents(accountId, arrayListOf(
+                        Operation.Credit(1000, randomUUID().toString(), accountId),
+                        Operation.Credit(332, randomUUID().toString(), accountId),
+                        Operation.Credit(9442, randomUUID().toString(), accountId)))
                 .build(accountId)
 
-        val requestId = randomUUID().toString()
-        val read = Operation.Read(requestId, accountId)
-        val probe = TestKit(system)
-
+        val read = Operation.Read(randomUUID().toString(), accountId)
         account.tell(read, probe.ref)
 
+        val expected = BalanceResponse(10774, StatusResponse.SUCCESS, read.requestId, read.accountId)
         val response = probe.expectMsgClass(BalanceResponse::class.java)
 
-        assertEquals(requestId, response.requestId)
-        assertEquals(accountId, response.accountId)
-        assertEquals(10774, response.balance)
-        assertEquals(StatusResponse.SUCCESS, response.status)
+        assertEquals(expected, response)
     }
 
     @Test
     fun `should compose balance of debits`() {
-        val accountId = "accountTest"
-        val commands = arrayListOf<Operation>(
-                Operation.Debit(10, randomUUID().toString(), accountId),
-                Operation.Debit(32, randomUUID().toString(), accountId))
-
         val account = AccountTestBuilder()
-                .withEvents(accountId, commands)
+                .withEvents(accountId, arrayListOf(
+                        Operation.Debit(10, randomUUID().toString(), accountId),
+                        Operation.Debit(32, randomUUID().toString(), accountId)))
                 .build(accountId)
 
-        val requestId = randomUUID().toString()
-        val read = Operation.Read(requestId, accountId)
-        val probe = TestKit(system)
-
+        val read = Operation.Read(randomUUID().toString(), accountId)
         account.tell(read, probe.ref)
 
+        val expected = BalanceResponse(-42, StatusResponse.SUCCESS, read.requestId, read.accountId)
         val response = probe.expectMsgClass(BalanceResponse::class.java)
 
-        assertEquals(requestId, response.requestId)
-        assertEquals(accountId, response.accountId)
-        assertEquals(-42, response.balance)
-        assertEquals(StatusResponse.SUCCESS, response.status)
+        assertEquals(expected, response)
     }
 
     @Test
     fun `should compose balance of credits and debits`() {
-        val accountId = "accountTest"
-        val commands = arrayListOf<Operation>(
-                Operation.Credit(1000, randomUUID().toString(), accountId),
-                Operation.Debit(10, randomUUID().toString(), accountId),
-                Operation.Credit(2000, randomUUID().toString(), accountId),
-                Operation.Debit(32, randomUUID().toString(), accountId),
-                Operation.Debit(992, randomUUID().toString(), accountId),
-                Operation.Debit(221, randomUUID().toString(), accountId),
-                Operation.Credit(781, randomUUID().toString(), accountId))
-
         val account = AccountTestBuilder()
-                .withEvents(accountId, commands)
+                .withEvents(accountId, arrayListOf(
+                        Operation.Credit(1000, randomUUID().toString(), accountId),
+                        Operation.Debit(10, randomUUID().toString(), accountId),
+                        Operation.Credit(2000, randomUUID().toString(), accountId),
+                        Operation.Debit(32, randomUUID().toString(), accountId),
+                        Operation.Debit(992, randomUUID().toString(), accountId),
+                        Operation.Debit(221, randomUUID().toString(), accountId),
+                        Operation.Credit(781, randomUUID().toString(), accountId)))
                 .build(accountId)
 
-        val requestId = randomUUID().toString()
-        val read = Operation.Read(requestId, accountId)
-        val probe = TestKit(system)
-
+        val read = Operation.Read(randomUUID().toString(), accountId)
         account.tell(read, probe.ref)
 
+        val expected = BalanceResponse(2526, StatusResponse.SUCCESS, read.requestId, read.accountId)
         val response = probe.expectMsgClass(BalanceResponse::class.java)
 
-        assertEquals(requestId, response.requestId)
-        assertEquals(accountId, response.accountId)
-        assertEquals(2526, response.balance)
-        assertEquals(StatusResponse.SUCCESS, response.status)
+        assertEquals(expected, response)
     }
 
     @Test
     fun `should raise exception`() {
-        val accountId = "accountTest"
         val account = AccountTestBuilder()
                 .build(accountId)
 
-        val requestId = randomUUID().toString()
-        val debit = Operation.Debit(100000, requestId, accountId)
-        val probe = TestKit(system)
-
+        val debit = Operation.Debit(100000, randomUUID().toString(), accountId)
         account.tell(debit, probe.ref)
 
+        val expected = DebitResponse(debit.amount, StatusResponse.ERROR, debit.requestId, debit.accountId)
         val response = probe.expectMsgClass(DebitResponse::class.java)
 
-        assertEquals(requestId, response.requestId)
-        assertEquals(accountId, response.accountId)
-        assertEquals(100000, response.amount)
-        assertEquals(StatusResponse.ERROR, response.status)
+        assertEquals(expected, response)
     }
 
     @Test
     fun `should increase balance when credit event is created`() {
-        val accountId = "accountTest"
-
-        val commands = arrayListOf<Operation>(
-                Operation.Credit(500, randomUUID().toString(), accountId))
-
         val account = AccountTestBuilder()
-                .withEvents(accountId, commands)
+                .withEvents(accountId, arrayListOf(
+                        Operation.Credit(500, randomUUID().toString(), accountId)))
                 .build(accountId)
 
-        val requestId = randomUUID().toString()
-        val credit = Operation.Credit(1000, requestId, accountId)
-        val probe = TestKit(system)
-
+        val credit = Operation.Credit(1000, randomUUID().toString(), accountId)
         account.tell(credit, probe.ref)
 
+        val expectedCreditResponse = CreditResponse(credit.amount, StatusResponse.SUCCESS, credit.requestId, credit.accountId)
         val creditResponse = probe.expectMsgClass(CreditResponse::class.java)
 
-        assertEquals(requestId, creditResponse.requestId)
-        assertEquals(accountId, creditResponse.accountId)
-        assertEquals(1000, creditResponse.amount)
-        assertEquals(StatusResponse.SUCCESS, creditResponse.status)
-
-        val read = Operation.Read(requestId, accountId)
-
+        val read = Operation.Read(randomUUID().toString(), accountId)
         account.tell(read, probe.ref)
 
+        val expectedReadResponse = BalanceResponse(1500, StatusResponse.SUCCESS, read.requestId, read.accountId)
         val readResponse = probe.expectMsgClass(BalanceResponse::class.java)
 
-        assertEquals(requestId, readResponse.requestId)
-        assertEquals(accountId, readResponse.accountId)
-        assertEquals(1500, readResponse.balance)
-        assertEquals(StatusResponse.SUCCESS, readResponse.status)
+        assertEquals(expectedCreditResponse, creditResponse)
+        assertEquals(expectedReadResponse, readResponse)
     }
 
     @Test
     fun `should reduce balance when debit event is created`() {
-        val accountId = "accountTest"
-
-        val commands = arrayListOf<Operation>(
-                Operation.Credit(500, randomUUID().toString(), accountId))
-
         val account = AccountTestBuilder()
-                .withEvents(accountId, commands)
+                .withEvents(accountId, arrayListOf(
+                        Operation.Credit(500, randomUUID().toString(), accountId)))
                 .build(accountId)
 
-        val requestId = randomUUID().toString()
-        val debit = Operation.Debit(1000, requestId, accountId)
-        val probe = TestKit(system)
-
+        val debit = Operation.Debit(1000, randomUUID().toString(), accountId)
         account.tell(debit, probe.ref)
 
+        val expectedDebitResponse = DebitResponse(debit.amount, StatusResponse.SUCCESS, debit.requestId, debit.accountId)
         val debitResponse = probe.expectMsgClass(DebitResponse::class.java)
 
-        assertEquals(requestId, debitResponse.requestId)
-        assertEquals(accountId, debitResponse.accountId)
-        assertEquals(1000, debitResponse.amount)
-        assertEquals(StatusResponse.SUCCESS, debitResponse.status)
-
-        val read = Operation.Read(requestId, accountId)
-
+        val read = Operation.Read(randomUUID().toString(), accountId)
         account.tell(read, probe.ref)
 
+        val expectedReadResponse = BalanceResponse(-500, StatusResponse.SUCCESS, read.requestId, read.accountId)
         val readResponse = probe.expectMsgClass(BalanceResponse::class.java)
 
-        assertEquals(requestId, readResponse.requestId)
-        assertEquals(accountId, readResponse.accountId)
-        assertEquals(-500, readResponse.balance)
-        assertEquals(StatusResponse.SUCCESS, readResponse.status)
+        assertEquals(expectedDebitResponse, debitResponse)
+        assertEquals(expectedReadResponse, readResponse)
     }
 
     @Test
     fun `should increase negative balance when credit event is created`() {
-        val accountId = "accountTest"
-
-        val commands = arrayListOf<Operation>(
-                Operation.Debit(500, randomUUID().toString(), accountId))
-
         val account = AccountTestBuilder()
-                .withEvents(accountId, commands)
+                .withEvents(accountId, arrayListOf(
+                        Operation.Debit(500, randomUUID().toString(), accountId)))
                 .build(accountId)
 
-        val requestId = randomUUID().toString()
-        val credit = Operation.Credit(1000, requestId, accountId)
-        val probe = TestKit(system)
-
+        val credit = Operation.Credit(1000, randomUUID().toString(), accountId)
         account.tell(credit, probe.ref)
 
+        val expectedCreditResponse = CreditResponse(credit.amount, StatusResponse.SUCCESS, credit.requestId, credit.accountId)
         val creditResponse = probe.expectMsgClass(CreditResponse::class.java)
 
-        assertEquals(requestId, creditResponse.requestId)
-        assertEquals(accountId, creditResponse.accountId)
-        assertEquals(1000, creditResponse.amount)
-        assertEquals(StatusResponse.SUCCESS, creditResponse.status)
-
-        val read = Operation.Read(requestId, accountId)
-
+        val read = Operation.Read(randomUUID().toString(), accountId)
         account.tell(read, probe.ref)
 
+        val expectedReadResponse = BalanceResponse(500, StatusResponse.SUCCESS, read.requestId, read.accountId)
         val readResponse = probe.expectMsgClass(BalanceResponse::class.java)
 
-        assertEquals(requestId, readResponse.requestId)
-        assertEquals(accountId, readResponse.accountId)
-        assertEquals(500, readResponse.balance)
-        assertEquals(StatusResponse.SUCCESS, readResponse.status)
+        assertEquals(expectedReadResponse, readResponse)
+        assertEquals(expectedCreditResponse, creditResponse)
     }
 
     private inner class AccountTestBuilder {
