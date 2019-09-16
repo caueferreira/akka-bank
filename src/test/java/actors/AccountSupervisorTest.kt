@@ -1,5 +1,6 @@
 package actors
 
+import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.testkit.javadsl.TestKit
 import commands.Operation
@@ -14,71 +15,98 @@ import responses.DebitResponse
 import responses.StatusResponse
 import responses.TransferResponse
 import source.EventStore
+import java.util.UUID.randomUUID
+import kotlin.collections.LinkedHashMap
 
 class AccountSupervisorTest {
     @Mock
     private lateinit var eventStore: EventStore
-    private lateinit var system: ActorSystem
 
+    private lateinit var system: ActorSystem
+    private lateinit var probe: TestKit
+
+    private var account1 = "account1"
+    private var account2 = "account2"
     @Before
     fun `before each`() {
         MockitoAnnotations.initMocks(this)
 
         system = ActorSystem.create()
+        probe = TestKit(system)
     }
 
     @Test
     fun `supervisor should forward debit`() {
-        val events = linkedMapOf<String, ArrayList<Operation>>()
-        events["account1"] = arrayListOf()
-        given(eventStore.commands).willReturn(events)
+        val events = object : LinkedHashMap<String, ArrayList<Operation>>() {
+            init {
+                put(account1, arrayListOf())
+            }
+        }
 
-        val debit = Operation.Debit(100, "REQ", "account1")
-        val supervisor = system.actorOf(AccountSupervisor.props(eventStore), "account-supervisor")
+        val supervisor = AccountSupervisorBuilder()
+                .withEvents(events)
+                .build()
 
-        val probe = TestKit(system)
-
+        val debit = Operation.Debit(100, randomUUID().toString(), account1)
         supervisor.tell(debit, probe.ref)
 
+        val expected = DebitResponse(debit.amount, StatusResponse.SUCCESS, debit.requestId, debit.accountId)
         val response = probe.expectMsgClass(DebitResponse::class.java)
-        val expected = DebitResponse(100, StatusResponse.SUCCESS, "REQ", "account1")
+
         assertEquals(expected, response)
     }
 
     @Test
     fun `supervisor should forward credit`() {
-        val events = linkedMapOf<String, ArrayList<Operation>>()
-        events["account1"] = arrayListOf()
-        given(eventStore.commands).willReturn(events)
+        val events = object : LinkedHashMap<String, ArrayList<Operation>>() {
+            init {
+                put(account1, arrayListOf())
+            }
+        }
 
-        val credit = Operation.Credit(100, "REQ", "account1")
-        val supervisor = system.actorOf(AccountSupervisor.props(eventStore), "account-supervisor")
+        val supervisor = AccountSupervisorBuilder()
+                .withEvents(events)
+                .build()
 
-        val probe = TestKit(system)
-
+        val credit = Operation.Credit(100, randomUUID().toString(), account1)
         supervisor.tell(credit, probe.ref)
 
+        val expected = CreditResponse(credit.amount, StatusResponse.SUCCESS, credit.requestId, credit.accountId)
         val response = probe.expectMsgClass(CreditResponse::class.java)
-        val expected = CreditResponse(100, StatusResponse.SUCCESS, "REQ", "account1")
+
         assertEquals(expected, response)
     }
 
     @Test
     fun `supervisor should forward transfer`() {
-        val events = linkedMapOf<String, ArrayList<Operation>>()
-        events["account1"] = arrayListOf()
-        events["account2"] = arrayListOf()
-        given(eventStore.commands).willReturn(events)
+        val events = object : LinkedHashMap<String, ArrayList<Operation>>() {
+            init {
+                put(account1, arrayListOf())
+                put(account2, arrayListOf())
+            }
+        }
 
-        val transfer = Operation.Transfer(100, "account2", "REQ", "account1")
-        val supervisor = system.actorOf(AccountSupervisor.props(eventStore), "account-supervisor")
+        val supervisor = AccountSupervisorBuilder()
+                .withEvents(events)
+                .build()
 
-        val probe = TestKit(system)
-
+        val transfer = Operation.Transfer(100, randomUUID().toString(), account1, account2)
         supervisor.tell(transfer, probe.ref)
 
+        val expected = TransferResponse(transfer.amount, transfer.receiverId, StatusResponse.SUCCESS, transfer.requestId, transfer.accountId)
         val response = probe.expectMsgClass(TransferResponse::class.java)
-        val expected = TransferResponse(100, "account2", StatusResponse.SUCCESS, "REQ", "account1")
+
         assertEquals(expected, response)
+    }
+
+    private inner class AccountSupervisorBuilder {
+        private val supervisor = "account-supervisor"
+
+        fun withEvents(events: LinkedHashMap<String, ArrayList<Operation>>): AccountSupervisorBuilder {
+            given(eventStore.commands).willReturn(events)
+            return this
+        }
+
+        fun build(): ActorRef = system.actorOf(AccountSupervisor.props(eventStore), supervisor)
     }
 }
