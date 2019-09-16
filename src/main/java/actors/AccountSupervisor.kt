@@ -2,11 +2,14 @@ package actors
 
 import akka.actor.AbstractActor
 import akka.actor.ActorRef
+import akka.actor.Nobody.tell
 import akka.actor.Props
 import commands.Command
 import commands.Operation
 import java.util.UUID.randomUUID
 import kotlin.collections.HashMap
+import responses.StatusResponse
+import responses.TransferResponse
 import source.EventStore
 
 class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
@@ -37,6 +40,8 @@ class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
 
             context.actorOf(transferSaga, "transfer-saga:${transfer.accountId}:${randomUUID()}")
                     .forward(transfer, context)
+        } else {
+            sender.tell(TransferResponse(transfer.amount, transfer.receiverId, StatusResponse.ERROR, transfer.requestId, transfer.accountId), self)
         }
     }
 

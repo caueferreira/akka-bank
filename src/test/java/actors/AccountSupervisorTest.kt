@@ -27,6 +27,7 @@ class AccountSupervisorTest {
 
     private var account1 = "account1"
     private var account2 = "account2"
+    private var nullAccount = "nullAccount"
 
     @Before
     fun `before each`() {
@@ -167,6 +168,52 @@ class AccountSupervisorTest {
         supervisor.tell(transfer, probe.ref)
 
         val expected = TransferResponse(transfer.amount, transfer.receiverId, StatusResponse.SUCCESS, transfer.requestId, transfer.accountId)
+        val response = probe.expectMsgClass(TransferResponse::class.java)
+
+        assertEquals(expected, response)
+    }
+
+    @Test
+    fun `should throw error when requester account is null`() {
+        val events = object : LinkedHashMap<String, ArrayList<Operation>>() {
+            init {
+                put(account1, arrayListOf())
+                put(account2, arrayListOf())
+            }
+        }
+
+        val transfer = Operation.Transfer(100, account2, randomUUID().toString(), nullAccount)
+
+        val supervisor = AccountSupervisorBuilder()
+                .withEvents(events)
+                .build()
+
+        supervisor.tell(transfer, probe.ref)
+
+        val expected = TransferResponse(transfer.amount, transfer.receiverId, StatusResponse.ERROR, transfer.requestId, transfer.accountId)
+        val response = probe.expectMsgClass(TransferResponse::class.java)
+
+        assertEquals(expected, response)
+    }
+
+    @Test
+    fun `should throw error when receiver account is null`() {
+        val events = object : LinkedHashMap<String, ArrayList<Operation>>() {
+            init {
+                put(account1, arrayListOf())
+                put(account2, arrayListOf())
+            }
+        }
+
+        val transfer = Operation.Transfer(100, nullAccount, randomUUID().toString(), account1)
+
+        val supervisor = AccountSupervisorBuilder()
+                .withEvents(events)
+                .build()
+
+        supervisor.tell(transfer, probe.ref)
+
+        val expected = TransferResponse(transfer.amount, transfer.receiverId, StatusResponse.ERROR, transfer.requestId, transfer.accountId)
         val response = probe.expectMsgClass(TransferResponse::class.java)
 
         assertEquals(expected, response)
