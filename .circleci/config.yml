@@ -37,6 +37,9 @@ jobs:
             - ~/.m2
           key: v1-dependencies-{{ checksum "pom.xml" }}
 
+      # Check lint
+      - run: mvn antrun:run@ktlint
+
       # run tests!
       - run: mvn test
       - run: bash <(curl -s https://codecov.io/bash -v)

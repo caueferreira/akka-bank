@@ -3,8 +3,8 @@ package actors
 import akka.actor.AbstractActor
 import akka.actor.ActorRef
 import akka.actor.Props
-import commands.Operation
 import commands.Command
+import commands.Operation
 import java.util.UUID.randomUUID
 import kotlin.collections.HashMap
 import source.EventStore

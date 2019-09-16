@@ -4,7 +4,10 @@ import akka.actor.AbstractActor
 import akka.actor.ActorRef
 import akka.actor.Props
 import akka.pattern.Patterns.ask
-import commands.*
+import commands.Operation
+import commands.compensation
+import commands.credit
+import commands.debit
 import responses.DebitResponse
 import responses.StatusResponse
 import responses.TransferResponse
@@ -32,7 +35,7 @@ class TransferSaga(private val from: ActorRef, private val to: ActorRef) : Abstr
         handleFuture(sender, transfer, credit.zip(debit))
     }
 
-    private fun handleFuture(sender: ActorRef, transfer: Operation.Transfer, zip: Future<Tuple2<Any, Any>>)  = zip.onComplete({
+    private fun handleFuture(sender: ActorRef, transfer: Operation.Transfer, zip: Future<Tuple2<Any, Any>>) = zip.onComplete({
         val debit = (it.get()._2 as DebitResponse)
         if (StatusResponse.ERROR == debit.status) {
             compensation(transfer)

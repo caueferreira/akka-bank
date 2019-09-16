@@ -4,6 +4,9 @@ import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.testkit.javadsl.TestKit
 import commands.Operation
+import java.util.UUID.randomUUID
+import kotlin.collections.ArrayList
+import kotlin.test.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.BDDMockito.given
@@ -12,9 +15,6 @@ import org.mockito.MockitoAnnotations
 import responses.StatusResponse
 import responses.TransferResponse
 import source.EventStore
-import java.util.UUID.randomUUID
-import kotlin.collections.ArrayList
-import kotlin.test.assertEquals
 
 class TransferSagaTest {
 

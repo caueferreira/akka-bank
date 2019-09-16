@@ -40,7 +40,6 @@ class EventStoreTest {
                 Operation.Credit(8730, randomUUID().toString(), account3),
                 Operation.Debit(953, randomUUID().toString(), account3))
 
-
         val eventStore = EventStoreBuilder()
                 .addEvents(account1, events[account1])
                 .addEvents(account2, events[account2])
@@ -64,7 +63,6 @@ class EventStoreTest {
         events[account3] = arrayListOf(
                 Operation.Credit(8730, randomUUID().toString(), account3),
                 Operation.Debit(953, randomUUID().toString(), account3))
-
 
         val eventStore = EventStoreBuilder()
                 .addEvents(account1, events[account1])

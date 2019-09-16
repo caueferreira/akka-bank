@@ -23,7 +23,6 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
             .match(Operation.Credit::class.java) { handleCredit(it) }
             .build()
 
-
     private fun handleRead(read: Operation.Read) {
         save(read)
         sender.tell(BalanceResponse(balance, StatusResponse.SUCCESS, read.requestId, id), self)

@@ -4,6 +4,8 @@ import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.testkit.javadsl.TestKit
 import commands.Operation
+import java.util.UUID.randomUUID
+import kotlin.collections.LinkedHashMap
 import kotlin.test.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -15,8 +17,6 @@ import responses.DebitResponse
 import responses.StatusResponse
 import responses.TransferResponse
 import source.EventStore
-import java.util.UUID.randomUUID
-import kotlin.collections.LinkedHashMap
 
 class AccountSupervisorTest {
     @Mock

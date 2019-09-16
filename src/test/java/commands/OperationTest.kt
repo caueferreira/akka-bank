@@ -1,8 +1,8 @@
 package commands
 
-import org.junit.Test
 import java.util.UUID.randomUUID
 import kotlin.test.assertEquals
+import org.junit.Test
 
 class OperationTest {
 

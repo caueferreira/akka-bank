@@ -190,7 +190,7 @@ class AccountTest {
     }
 
     @Test
-    fun `should throw credit already executed`(){
+    fun `should throw credit already executed`() {
         val credit = Operation.Credit(1000, randomUUID().toString(), accountId)
 
         val account = AccountTestBuilder()
@@ -206,7 +206,7 @@ class AccountTest {
     }
 
     @Test
-    fun `should throw debit already executed`(){
+    fun `should throw debit already executed`() {
         val debit = Operation.Debit(1000, randomUUID().toString(), accountId)
 
         val account = AccountTestBuilder()
