@@ -70,5 +70,5 @@ class Account(private val id: String, private val eventStore: EventStore, var ba
                 is Operation.Credit -> balance += it.amount
             }
         }
-    }
+     }
 }

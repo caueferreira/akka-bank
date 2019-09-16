@@ -1,4 +1,3 @@
-import actors.AccountSupervisor
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.http.javadsl.ConnectHttp
@@ -9,36 +8,24 @@ import akka.http.javadsl.server.AllDirectives
 import akka.http.javadsl.server.Route
 import akka.pattern.Patterns.ask
 import akka.stream.ActorMaterializer
-import commands.Operation
+import com.google.gson.Gson
 import java.time.Duration
 import java.util.concurrent.CompletionStage
 import responses.TransferResponse
-import source.EventStore
 
 class BankServer : AllDirectives() {
 
-    init {
-        val system = ActorSystem.create("kakka-system")
-        val eventStore = EventStore()
-
-        try {
-            val supervisor = system.actorOf(AccountSupervisor.props(eventStore), "account-supervisor")
-            startHttpServer(system, supervisor)
-        } finally {
-            system.terminate()
-        }
-    }
-
-    private fun startHttpServer(system: ActorSystem, supervisor: ActorRef) {
+    fun startHttpServer(system: ActorSystem, supervisor: ActorRef) {
         val http = Http.get(system)
         val materializer = ActorMaterializer.create(system)
 
-        val app = BankServer()
-
-        val routeFlow = app.createRoute(supervisor).flow(system, materializer)
+        val routeFlow = createRoute(supervisor).flow(system, materializer)
         val binding = http.bindAndHandle(routeFlow,
                 ConnectHttp.toHost("localhost", 9097), materializer)
 
+
+        println("Server online at http://localhost:9097/\nPress RETURN to stop...")
+        System.`in`.read()
         binding
                 .thenCompose(ServerBinding::unbind)
                 .thenAccept { system.terminate() }
@@ -50,9 +37,9 @@ class BankServer : AllDirectives() {
                 path("transfer"
                 ) {
                     post {
-                        entity(Jackson.unmarshaller(Operation.Transfer::class.java)) { transfer ->
-                            println("received $transfer")
-                            val bids: CompletionStage<TransferResponse> = ask(supervisor, transfer, timeout)
+                        entity(Jackson.unmarshaller(Any::class.java)) { transfer ->
+                            val bids: CompletionStage<TransferResponse> = ask(supervisor,
+                                    Gson().fromJson(Gson().toJson(transfer), TransferRequest::class.java).operation(), timeout)
                                     .thenApply { it as TransferResponse }
                             completeOKWithFuture(bids, Jackson.marshaller())
                         }
