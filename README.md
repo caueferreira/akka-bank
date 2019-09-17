@@ -14,7 +14,7 @@ The application shows four operations:
 
 ## Architecture
 
-Akka-Bank was developed with event sourcing in mind, it has an **EventStore** class, that mocks the [events](https://github.com/caueferreira/akka-bank/blob/master/src/main/java/commands/Operation.kt) of the accounts and when an **Account** actor is instanciated it will check for his events and compose its balance. The **AccountSupervisor** is responsible for forwarding all events to the responsible actor and the **TransferSaga** is exclusively responsible for handling the transferency business rules. The account actors were developer with idempotency, so if some reason the same operation is to be requested, it will return a proper message instead of re-executing the requests.operation. 
+Akka-Bank was developed with event sourcing in mind, it has an **EventStore** class, that mocks the [events](https://github.com/caueferreira/akka-bank/blob/master/src/main/java/commands/Operation.kt) of the accounts and when an **Account** actor is instanciated it will check for his events and compose its balance. The **AccountSupervisor** is responsible for forwarding all events to the responsible actor and the **TransferSaga** is exclusively responsible for handling the transfer business rules. The account actors were developed with idempotence, so if some reason the same operation is to be requested, it will return a proper message instead of re-executing the requests.operation. 
 
 <p align="center">
   <img src="https://github.com/caueferreira/akka-bank/blob/master/.github/actors.png" width="360">
