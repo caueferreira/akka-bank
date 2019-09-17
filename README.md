@@ -48,3 +48,5 @@ https://documenter.getpostman.com/view/7830954/SVmvRyB2
 **Runing tests**
 
 `mvn test`
+
+The tests are heavily focused on the actors and its interactions.
