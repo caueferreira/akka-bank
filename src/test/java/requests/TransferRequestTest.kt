@@ -1,7 +1,11 @@
+package requests
+
 import commands.Operation
 import java.util.UUID.randomUUID
 import kotlin.test.assertEquals
 import org.junit.Test
+import requests.TransferRequest
+import requests.operation
 
 class TransferRequestTest {
 

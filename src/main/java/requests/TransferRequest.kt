@@ -1,3 +1,5 @@
+package requests
+
 import commands.Operation
 
 data class TransferRequest(val amount: Long, val receiverId: String, val requestId: String, val accountId: String)

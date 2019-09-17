@@ -7,14 +7,14 @@
 ## About
 This is a showcase application that uses akka framework as the core of its functionality. I decided to use akka as the chosen framework, mostly for its natural ability of helping you to construct an concurrent and distributed application.
 The application shows four operations:
-* *READ* ~ given an account, this operation return its balance
-* *CREDIT* ~ given an account, this operation increases its balance
-* *DEBIT* ~ given an account, this operation decreases its balance
-* *TRANSFER* ~ given two accounts - an receiver and an requester -, this operation decreases the balacen from the requester and adds it to the receiver balance
+* *READ* ~ given an account, this requests.operation return its balance
+* *CREDIT* ~ given an account, this requests.operation increases its balance
+* *DEBIT* ~ given an account, this requests.operation decreases its balance
+* *TRANSFER* ~ given two accounts - an receiver and an requester -, this requests.operation decreases the balacen from the requester and adds it to the receiver balance
 
 ## Architecture
 
-Akka-Bank was developer with event sourcing in mind, it has an **EventStore** class, that mocks the events of the accounts and when an **Account** actor is instanciated it will check for his events and compose its balance. The **AccountSupervisor** is responsible for forwarding all events to the responsible actor and the **TransferSaga** is exclusively responsible for handling the transferency business rules. The account actors were developer with idempotency, so if some reason the same operation is to be requested, it will return a proper message instead of re-executing the operation.
+Akka-Bank was developer with event sourcing in mind, it has an **EventStore** class, that mocks the events of the accounts and when an **Account** actor is instanciated it will check for his events and compose its balance. The **AccountSupervisor** is responsible for forwarding all events to the responsible actor and the **TransferSaga** is exclusively responsible for handling the transferency business rules. The account actors were developer with idempotency, so if some reason the same requests.operation is to be requested, it will return a proper message instead of re-executing the requests.operation.
 
 ## Stack
  * Akka
