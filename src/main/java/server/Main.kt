@@ -11,7 +11,7 @@ object Main {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val system = ActorSystem.create("kakka-system")
+        val system = ActorSystem.create("akka-system")
         val events = LinkedHashMap<String, ArrayList<Operation>>()
         events["account1"] = arrayListOf<Operation>(
                 Operation.Credit(10000, randomUUID().toString(), "account1"))
