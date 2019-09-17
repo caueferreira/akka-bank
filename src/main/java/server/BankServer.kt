@@ -12,7 +12,6 @@ import akka.http.javadsl.server.PathMatchers.segment
 import akka.http.javadsl.server.Route
 import akka.pattern.Patterns.ask
 import akka.stream.ActorMaterializer
-import com.google.gson.Gson
 import java.time.Duration
 import java.util.UUID.randomUUID
 import java.util.concurrent.CompletionStage
@@ -62,9 +61,8 @@ class BankServer(private val system: ActorSystem, private val eventStore: EventS
                 },
                 path("transfer") {
                     post {
-                        entity(Jackson.unmarshaller(Any::class.java)) { transfer ->
-                            val response: CompletionStage<TransferResponse> = ask(supervisor,
-                                    Gson().fromJson(Gson().toJson(transfer), TransferRequest::class.java).operation(), timeout)
+                        entity(Jackson.unmarshaller(TransferRequest::class.java)) { transfer ->
+                            val response: CompletionStage<TransferResponse> = ask(supervisor, transfer.operation(), timeout)
                                     .thenApply { it as TransferResponse }
                             completeOKWithFuture(response, Jackson.marshaller())
                         }
@@ -72,9 +70,8 @@ class BankServer(private val system: ActorSystem, private val eventStore: EventS
                 },
                 path("credit") {
                     post {
-                        entity(Jackson.unmarshaller(Any::class.java)) { credit ->
-                            val response: CompletionStage<CreditResponse> = ask(supervisor,
-                                    Gson().fromJson(Gson().toJson(credit), CreditRequest::class.java).operation(), timeout)
+                        entity(Jackson.unmarshaller(CreditRequest::class.java)) { credit ->
+                            val response: CompletionStage<CreditResponse> = ask(supervisor, credit.operation(), timeout)
                                     .thenApply { it as CreditResponse }
                             completeOKWithFuture(response, Jackson.marshaller())
                         }
@@ -82,9 +79,8 @@ class BankServer(private val system: ActorSystem, private val eventStore: EventS
                 },
                 path("debit") {
                     post {
-                        entity(Jackson.unmarshaller(Any::class.java)) { debit ->
-                            val response: CompletionStage<DebitResponse> = ask(supervisor,
-                                    Gson().fromJson(Gson().toJson(debit), DebitRequest::class.java).operation(), timeout)
+                        entity(Jackson.unmarshaller(DebitRequest::class.java)) { debit ->
+                            val response: CompletionStage<DebitResponse> = ask(supervisor, debit.operation(), timeout)
                                     .thenApply { it as DebitResponse }
                             completeOKWithFuture(response, Jackson.marshaller())
                         }
