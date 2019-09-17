@@ -29,6 +29,7 @@ class TransferSaga(private val from: ActorRef, private val to: ActorRef) : Abstr
     }
 
     private fun transfer(transfer: Operation.Transfer) {
+        println("TransferSaga: Starting transfer from ${transfer.accountId} to ${transfer.receiverId} with amount of ${transfer.amount}")
         val debit = ask(from, transfer.debit(), 200)
         val credit = ask(to, transfer.credit(), 200)
 
@@ -38,9 +39,11 @@ class TransferSaga(private val from: ActorRef, private val to: ActorRef) : Abstr
     private fun handleFuture(sender: ActorRef, transfer: Operation.Transfer, zip: Future<Tuple2<Any, Any>>) = zip.onComplete({
         val debit = (it.get()._2 as DebitResponse)
         if (StatusResponse.ERROR == debit.status) {
+            println("TransferSaga: Transfer ${transfer.requestId} received an error")
             compensation(transfer)
         }
 
+        println("TransferSaga: Transfer ${transfer.requestId} was successfully executed")
         sender.tell(buildTransfer(transfer, debit.status), self)
     }, context.system.dispatcher)
 
@@ -52,6 +55,7 @@ class TransferSaga(private val from: ActorRef, private val to: ActorRef) : Abstr
             transfer.accountId)
 
     private fun compensation(transfer: Operation.Transfer) {
+        println("TransferSaga: Triggered compensation for ${transfer.receiverId} due lack of funds of ${transfer.accountId}")
         to.forward(transfer.compensation(), context)
     }
 }

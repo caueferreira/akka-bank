@@ -20,6 +20,10 @@ Akka-Bank was developer with event sourcing in mind, it has an **EventStore** cl
  * Akka
  * Akka-Http
  * Junit
+ 
+## Documentation
+
+https://documenter.getpostman.com/view/7830954/SVmvRyB2
 
 ## Running
 

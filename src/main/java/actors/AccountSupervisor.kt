@@ -2,7 +2,6 @@ package actors
 
 import akka.actor.AbstractActor
 import akka.actor.ActorRef
-import akka.actor.Nobody.tell
 import akka.actor.Props
 import commands.Command
 import commands.Operation
@@ -50,6 +49,7 @@ class AccountSupervisor(private val eventStore: EventStore) : AbstractActor() {
     }
 
     override fun preStart() {
+        println("AccountSupervisor: Recovering events of accounts ${eventStore.commands.keys}")
         eventStore.commands.keys.forEach {
             accountIdToActor[it] = context.actorOf(Account.props(it, eventStore), it)
         }
