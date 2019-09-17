@@ -1,3 +1,4 @@
+import actors.AccountSupervisor
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.http.javadsl.ConnectHttp
@@ -10,6 +11,7 @@ import akka.http.javadsl.server.Route
 import akka.pattern.Patterns.ask
 import akka.stream.ActorMaterializer
 import com.google.gson.Gson
+import commands.Operation
 import java.time.Duration
 import java.util.UUID.randomUUID
 import java.util.concurrent.CompletionStage
@@ -22,25 +24,43 @@ import responses.BalanceResponse
 import responses.CreditResponse
 import responses.DebitResponse
 import responses.TransferResponse
+import source.EventStore
 
 class BankServer : AllDirectives() {
 
-    fun startHttpServer(system: ActorSystem, supervisor: ActorRef) {
-        val http = Http.get(system)
-        val materializer = ActorMaterializer.create(system)
+    companion object {
+        @JvmStatic
+        fun main(args: Array<String>) {
+            val system = ActorSystem.create("kakka-system")
+            val events = LinkedHashMap<String, ArrayList<Operation>>()
+            events["account1"] = arrayListOf<Operation>(
+                    Operation.Credit(10000, randomUUID().toString(), "account1"))
+            events["account2"] = arrayListOf<Operation>(
+                    Operation.Credit(4000, randomUUID().toString(), "account2"))
 
-        val routeFlow = createRoute(supervisor).flow(system, materializer)
-        val binding = http.bindAndHandle(routeFlow,
-                ConnectHttp.toHost("localhost", 9097), materializer)
+            val eventStore = EventStore(events)
 
-        println("Server online at http://localhost:9097/\nPress RETURN to stop...")
-        System.`in`.read()
-        binding
-                .thenCompose(ServerBinding::unbind)
-                .thenAccept { system.terminate() }
+            try {
+                val supervisor = system.actorOf(AccountSupervisor.props(eventStore), "account-supervisor")
+                val materializer = ActorMaterializer.create(system)
+
+                val server = BankServer()
+                val routeFlow = server.createRoute(supervisor).flow(system, materializer)
+                val binding = Http.get(system).bindAndHandle(routeFlow,
+                        ConnectHttp.toHost("localhost", 9097), materializer)
+
+                println("Server online at http://localhost:9097/\nPress RETURN to stop...")
+                System.`in`.read()
+                binding
+                        .thenCompose(ServerBinding::unbind)
+                        .thenAccept { system.terminate() }
+            } finally {
+                system.terminate()
+            }
+        }
     }
 
-    private fun createRoute(supervisor: ActorRef): Route {
+    fun createRoute(supervisor: ActorRef): Route {
         val timeout = Duration.ofSeconds(5L)
         return concat(
                 pathPrefix("balance") {
