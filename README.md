@@ -23,6 +23,10 @@ Akka-Bank was developer with event sourcing in mind, it has an **EventStore** cl
 
 ## Running
 
+**Run the server**
+
+`mvn package && java -jar target/akka-bank-1.0-SNAPSHOT-allinone.jar`
+
 **Runing tests**
 
 `mvn test`
