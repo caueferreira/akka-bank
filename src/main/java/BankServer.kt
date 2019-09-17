@@ -12,12 +12,12 @@ import akka.stream.ActorMaterializer
 import com.google.gson.Gson
 import requests.*
 import java.time.Duration
+import java.util.UUID.randomUUID
 import java.util.concurrent.CompletionStage
 import responses.BalanceResponse
 import responses.CreditResponse
 import responses.DebitResponse
 import responses.TransferResponse
-import java.util.UUID.randomUUID
 
 class BankServer : AllDirectives() {
 

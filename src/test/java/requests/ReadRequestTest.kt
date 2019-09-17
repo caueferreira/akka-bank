@@ -4,7 +4,6 @@ import commands.Operation
 import java.util.UUID.randomUUID
 import kotlin.test.assertEquals
 import org.junit.Test
-import responses.BalanceResponse
 
 class ReadRequestTest {
 
