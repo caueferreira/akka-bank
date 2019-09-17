@@ -11,7 +11,7 @@
         <akka>2.5.23</akka>
         <akka-http>10.1.9</akka-http>
         <kotlin.version>1.3.50</kotlin.version>
-        <mainClass>Main</mainClass>
+        <mainClass>server.Main</mainClass>
     </properties>
 
     <dependencies>
@@ -224,6 +224,11 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.2</version>
+                <configuration>
+                    <excludes>
+                        <exclude>server/*</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>

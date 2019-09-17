@@ -1,3 +1,5 @@
+package server
+
 object Main {
 
     @JvmStatic

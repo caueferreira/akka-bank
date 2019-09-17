@@ -1,3 +1,5 @@
+package server
+
 import actors.AccountSupervisor
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
