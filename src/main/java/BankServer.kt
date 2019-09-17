@@ -9,10 +9,10 @@ import akka.http.javadsl.server.Route
 import akka.pattern.Patterns.ask
 import akka.stream.ActorMaterializer
 import com.google.gson.Gson
-import requests.TransferRequest
-import requests.operation
 import java.time.Duration
 import java.util.concurrent.CompletionStage
+import requests.TransferRequest
+import requests.operation
 import responses.TransferResponse
 
 class BankServer : AllDirectives() {
