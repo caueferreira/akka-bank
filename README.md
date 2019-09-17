@@ -5,7 +5,7 @@
  [![Maintainability](https://api.codeclimate.com/v1/badges/6df8d9d2452bbe235682/maintainability)](https://codeclimate.com/github/caueferreira/akka-bank/maintainability) [![codebeat badge](https://codebeat.co/badges/c03cd996-266b-4601-a1ca-e7185407578a)](https://codebeat.co/projects/github-com-caueferreira-akka-bank-master) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/2b7a211714e64697bc5f581082479182)](https://www.codacy.com/manual/caueferreira/akka-bank?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=caueferreira/akka-bank&amp;utm_campaign=Badge_Grade) [![codecov](https://codecov.io/gh/caueferreira/akka-bank/branch/master/graph/badge.svg)](https://codecov.io/gh/caueferreira/akka-bank)
 
 ## About
-This is a showcase application that uses akka framework as the core of its functionality. I decided to use akka as the chosen framework, mostly for its natural ability of helping you to construct an concurrent and distributed application.
+This is a showcase application that uses akka framework as the core of its functionality. I decided to use akka as the chosen framework, mostly for its natural non-blocking concept and its ability of helping you to construct an concurrent and distributed application.
 The application shows four operations:
 *   *READ* ~ given an account, this requests.operation return its balance
 *   *CREDIT* ~ given an account, this requests.operation increases its balance
