@@ -28,6 +28,8 @@ Since the focus of this application is the transfer, most of the other functions
 
 The **EventStore** represents the events of all accounts, the idea behind it is to a event sourcing. This application was developed with event driven architecture in mind, all events are stored in the store, those events are immutable.
 
+For simplicity, there's no create account endpoint, however the [BankServer](https://github.com/caueferreira/akka-bank/blob/master/src/main/java/server/BankServer.kt#L37) is been created with 3 accounts, as well its past events. In order to test new accounts or add more events, simple edit the previous file with all that's intended.
+
 ## Stack
 *   Akka
 *   Akka-Http
