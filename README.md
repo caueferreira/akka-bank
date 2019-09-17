@@ -16,6 +16,10 @@ The application shows four operations:
 
 Akka-Bank was developed with event sourcing in mind, it has an **EventStore** class, that mocks the events of the accounts and when an **Account** actor is instanciated it will check for his events and compose its balance. The **AccountSupervisor** is responsible for forwarding all events to the responsible actor and the **TransferSaga** is exclusively responsible for handling the transferency business rules. The account actors were developer with idempotency, so if some reason the same requests.operation is to be requested, it will return a proper message instead of re-executing the requests.operation. 
 
+<p align="center">
+  <img src="https://github.com/caueferreira/akka-bank/blob/master/.github/actors.png" width="360">
+</p>
+
 ### How it works?
 
 The **Account** was developed with idempotence in mind, once it is instantiated it gathers all events from itself and compose its balance. Whenever an **Account** handle an event that it has already executed, it will return a message stating that it has been already executed. If it receives an event of Debit but the result of its deduction would reduce its balance below a limit threshold, the **Account** will answer with an error response, it shapes how **TransferSaga** handles transfer events. 
