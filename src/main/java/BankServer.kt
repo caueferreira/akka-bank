@@ -5,15 +5,19 @@ import akka.http.javadsl.Http
 import akka.http.javadsl.ServerBinding
 import akka.http.javadsl.marshallers.jackson.Jackson
 import akka.http.javadsl.server.AllDirectives
+import akka.http.javadsl.server.PathMatchers.segment
 import akka.http.javadsl.server.Route
 import akka.pattern.Patterns.ask
 import akka.stream.ActorMaterializer
 import com.google.gson.Gson
+import requests.*
 import java.time.Duration
 import java.util.concurrent.CompletionStage
-import requests.TransferRequest
-import requests.operation
+import responses.BalanceResponse
+import responses.CreditResponse
+import responses.DebitResponse
 import responses.TransferResponse
+import java.util.UUID.randomUUID
 
 class BankServer : AllDirectives() {
 
@@ -35,14 +39,42 @@ class BankServer : AllDirectives() {
     private fun createRoute(supervisor: ActorRef): Route {
         val timeout = Duration.ofSeconds(5L)
         return concat(
-                path("transfer"
-                ) {
+                pathPrefix("balance") {
+                    path<String>(segment()) { id: String ->
+                        get {
+                            val response = ask(supervisor, ReadRequest(randomUUID().toString(), id).operation(), timeout)
+                                    .thenApply { it as BalanceResponse }
+                            completeOKWithFuture(response, Jackson.marshaller())
+                        }
+                    }
+                },
+                path("transfer") {
                     post {
                         entity(Jackson.unmarshaller(Any::class.java)) { transfer ->
-                            val bids: CompletionStage<TransferResponse> = ask(supervisor,
+                            val response: CompletionStage<TransferResponse> = ask(supervisor,
                                     Gson().fromJson(Gson().toJson(transfer), TransferRequest::class.java).operation(), timeout)
                                     .thenApply { it as TransferResponse }
-                            completeOKWithFuture(bids, Jackson.marshaller())
+                            completeOKWithFuture(response, Jackson.marshaller())
+                        }
+                    }
+                },
+                path("credit") {
+                    post {
+                        entity(Jackson.unmarshaller(Any::class.java)) { credit ->
+                            val response: CompletionStage<CreditResponse> = ask(supervisor,
+                                    Gson().fromJson(Gson().toJson(credit), CreditRequest::class.java).operation(), timeout)
+                                    .thenApply { it as CreditResponse }
+                            completeOKWithFuture(response, Jackson.marshaller())
+                        }
+                    }
+                },
+                path("debit") {
+                    post {
+                        entity(Jackson.unmarshaller(Any::class.java)) { debit ->
+                            val response: CompletionStage<DebitResponse> = ask(supervisor,
+                                    Gson().fromJson(Gson().toJson(debit), DebitRequest::class.java).operation(), timeout)
+                                    .thenApply { it as DebitResponse }
+                            completeOKWithFuture(response, Jackson.marshaller())
                         }
                     }
                 })
