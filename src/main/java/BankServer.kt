@@ -10,10 +10,14 @@ import akka.http.javadsl.server.Route
 import akka.pattern.Patterns.ask
 import akka.stream.ActorMaterializer
 import com.google.gson.Gson
-import requests.*
 import java.time.Duration
 import java.util.UUID.randomUUID
 import java.util.concurrent.CompletionStage
+import requests.CreditRequest
+import requests.DebitRequest
+import requests.ReadRequest
+import requests.TransferRequest
+import requests.operation
 import responses.BalanceResponse
 import responses.CreditResponse
 import responses.DebitResponse
